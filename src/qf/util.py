@@ -55,7 +55,8 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
     """
         Reads a graph from the given file, possibly skipping the first line (a.k.a. header). If not dense, every line is a `separator`-separated pair of node
         names, each corresponding to an arc. If dense, the header lines contains a first special value (ignored), the separator, and then `separator`-separated target names:
-        the following lines contain each the source name, the separator, and then values (0 if there is no arc to the corresponding target, a non-zero value otherwise).
+        the following lines contain each the source name, the separator, and then values (0 if there is no arc to the corresponding target, a non-zero value gives the
+        number of arcs to the target).
         The result is a `networkx.MultiDiGraph`, whose nodes are strings (the node names in the file) and whose arcs have a "label" attribute with
         value "(s,t)" where s is the source and t is the target.
         If `coordinates` is provided, then every node has a "pos" attribute, with value "x,y!" where the coordinates are those associated
@@ -87,7 +88,8 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
             source = v[0]
             for i in range(1, len(v)):
                 if int(v[i]) > 0 and targets[i - 1] != source:
-                    G.add_edge(source, targets[i - 1], label="(%s -> %s)" % (source, targets[i - 1]))
+                    for times in range(int(v[i])):
+                        G.add_edge(source, targets[i - 1], label="(%s -> %s)" % (source, targets[i - 1]))
         else:
             if line.strip() == '':
                 continue
@@ -104,32 +106,53 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
     return G
 
 
-# Reads a label set from the given file, possibly skipping the first line. Every line is a separator-separated pair of node
-# name and label
 def readLabel(filename, skipHeader=True, separator="\t"):
+    """
+        Reads a label set from the given file, possibly skipping the first line. Every line is a `separator`-separated pair of node
+        name and label,
+
+        Args:
+            filename (str): the name of the file containing the labels.
+            skipHeader (bool): whether the first line should be skipped.
+            separator (str): the separator between node name and label.
+
+        Returns:
+            a dictionary whose keys are the nodes (first column of the file) and whose values are the keys (second column).
+    """
     f = open(filename, "r")
     m = {}
     if skipHeader:
         f.readline()
     while True:
         line = f.readline()
-        if not line:
+        if not line.strip():
             break
         v = line.strip().split(separator)
         m[v[0]] = v[1]
     f.close()
     return m
 
-# Reads the coordinates of nodes from a given file, possibly skipping the first line. Every line is a separator-separated triple:
-# the first element is the node name, the remaining two elements are the X and Y coordinates, respectively    
 def readCoordinates(filename, skipHeader=True, separator=" "):
+    """
+        Reads the coordinates of nodes from a given file, possibly skipping the first line. Every line is a separator-separated triple:
+        the first element is the node name, the remaining two elements are the X and Y coordinates (two floats), respectively.
+
+        Args:
+            filename (str): the name of the file containing the coordinatess.
+            skipHeader (bool): whether the first line should be skipped.
+            separator (str): the separator between node name, the X coordinate and the Y coordinate.
+
+        Returns:
+            a dictionary whose keys are the nodes (first column of the file) and whose values are pairs of floats (second and third column).
+
+    """
     f = open(filename, "r")
     xy = {}
     if skipHeader:
         f.readline()
     while True:
         line = f.readline()
-        if not line:
+        if not line.strip():
             break
         v = line.strip().split(separator)
         xy[v[0]] = (float(v[1]),float(v[2]))
