@@ -16,9 +16,17 @@ from sklearn.cluster import DBSCAN
 from qf.util import indexify
 
 
-# Adds to the graph G a set of arcs with names. Each element of triples is a triple (u,v,n) where u and v are the
-# source and target of the arc and n is its name (it will be put in the "label" attribute of the edge)
 def addEdgesWithName(G, triples):
+    """
+        Adds to the graph G a set of arcs with names. Each element of triples is a triple (u,v,n) where u and v are the
+        source and target of the arc and n is its name (it will be put in the "label" attribute of the edge).
+
+        Args:
+            G: the graph to which edges will be added (a `networkx.MultiDiGraph`).
+            triples: a list of triples; each triple is a pair of nodes followed by a string (which will be stored in the "label" attribute of the edge).
+                The same source/target pair may appear more than once, but it is advisable to have all labels distinct, and also labels distinct from
+                node names.
+    """
     lab = [name for u,v,name in triples]
     if len(lab) != len(set(lab)):
         print("Careful --- repeated edge name")
