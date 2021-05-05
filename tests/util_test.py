@@ -124,6 +124,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual({"A": (0,0.1), "B": (2,1.2), "C": (0,0), "D": (11112.1,1)}, res)
 
     def test_colors(self):
-        self.assertEquals(10, qf.util.colors(10))
-        
+        self.assertEquals(10, len(qf.util.colors(10)))
+
 if __name__ == "__main__": unittest.main()

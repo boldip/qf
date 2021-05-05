@@ -10,8 +10,19 @@ import numpy as np
 from qf.util import indexify
 
 
-# Returns the Cardon-Crochemore labelling (a map from nodes whose fibres are the same as in the CC algorithm)
 def cardon_crochemore(G, max_step=-1):
+    """
+        Computes and returns the coarsest equitable partition of the nodes of the graph G.
+        If `max_step` is not negative, the computation is stopped prematurely after that number of iterations.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            max_step (int): the maximum number of iterations, or -1 to stop only after `G.number_of_nodes()` steps.
+
+        Returns:
+            a dictionary with the nodes of `G` as keys, and with values in `range(k)` where `k` is the number of
+            classes; two nodes have the same value iff they belong to the same class.
+    """
     if max_step < 0:
         max_step = len(G.nodes)
     label={x:0 for x in G.nodes}
