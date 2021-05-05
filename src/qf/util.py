@@ -53,8 +53,8 @@ def jaccard_multiset(x, y):
 
 def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinates=None, scale=10):
     """
-        Reads a graph from the given file, possibly skipping the first line (a.k.a. header). If `dense`=False, every line is a `separator`-separated pair of node
-        names, each corresponding to an arc. If `dense`=True, the header lines contains a first special value (ignored), the separator, and then `separator`-separated target names:
+        Reads a graph from the given file, possibly skipping the first line (a.k.a. header). If not dense, every line is a `separator`-separated pair of node
+        names, each corresponding to an arc. If dense, the header lines contains a first special value (ignored), the separator, and then `separator`-separated target names:
         the following lines contain each the source name, the separator, and then values (0 if there is no arc to the corresponding target, a non-zero value otherwise).
         The result is a `networkx.MultiDiGraph`, whose nodes are strings (the node names in the file) and whose arcs have a "label" attribute with
         value "(s,t)" where s is the source and t is the target.
@@ -63,7 +63,7 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
 
         Args:
             filename (str): the name of the file containing the graph.
-            skipHeader (bool): whether the first line should be skipped (ignored if `dense`==True).
+            skipHeader (bool): whether the first line should be skipped (ignored if dense==True).
             separator (str): the separator.
             dense (bool): whether the format is dense or not (see above).
             coordinates (dict): either `None`, or a dict whose keys are the nodes and whose values are tuples of two numbers each, representing the coordinates.
