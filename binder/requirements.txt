@@ -1,0 +1,9 @@
+ipywidgets
+jupyter
+graphviz
+matplotlib
+networkx
+numpy
+scipy
+sklearn
+
