@@ -143,9 +143,13 @@ class TestUtil(unittest.TestCase):
             self.assertEqual("{},{}!".format(coordinates[node][0] * scale, coordinates[node][1] * scale), d["pos"])
 
     def test_nmi(self):
-        a={0: 0, 1: 0, 2: 1}
-        b={0: 0, 1: 1, 2: 1}
+        a={0: 0, 1: 0, 2: 1, 3: 1}
+        ap={0: 4, 1: 4, 2: 3, 3: 3}
         self.assertEqual(1.0, qf.util.nmi(a, a))
+        self.assertEqual(1.0, qf.util.nmi(a, ap))
+        a={0: 0, 1: 0, 2: 0, 3: 0}
+        b={0: 0, 1: 1, 2: 2, 3: 3}
+        self.assertEqual(0.0, qf.util.nmi(a, b)) # Example from https://scikit-learn.org/stable/modules/generated/sklearn.metrics.adjusted_mutual_info_score.html
     
     def test_colors(self):
         self.assertEqual(10, len(qf.util.colors(10)))

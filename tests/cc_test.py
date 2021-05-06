@@ -5,7 +5,7 @@ from numpy import random
 import qf.cc
 
 
-class TestUtil(unittest.TestCase):
+class TestCc(unittest.TestCase):
 
     def test_cardon_crochemore(self):
         G = nx.MultiDiGraph()
