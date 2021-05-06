@@ -36,7 +36,7 @@ def jaccard_multiset(x, y):
                 in the corresponding multiset).
 
         Returns:
-            the Jaccard coefficient.
+            the Jaccard coefficient (1 if both sets are empty).
         
     """
     cx = Counter(x)
@@ -98,7 +98,6 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
                 G.add_edge(v[0], v[1], label="(%s -> %s)" % (v[0], v[1]))
     f.close()
     if coordinates is not None:
-        scale=10
         t={}
         for k,v in coordinates.items():
             t[k]="{},{}!".format(v[0] * scale, v[1] * scale)        

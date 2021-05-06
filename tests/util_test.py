@@ -25,6 +25,10 @@ class TestUtil(unittest.TestCase):
         # 5: 0 vs. 3
         expected = (1 + 0 + 0 + 2 + 0) / (2 + 1 + 1 + 3 + 3)
         self.assertEqual(expected, qf.util.jaccard_multiset(a, b))
+        a = []
+        b = []
+        expected = 1   # Jaccard similarity if the sets are both empty
+        self.assertEqual(expected, qf.util.jaccard_multiset(a, b))
 
     def test_read_graph_sparse(self):
         tempFile = tempfile.NamedTemporaryFile()
@@ -100,7 +104,7 @@ class TestUtil(unittest.TestCase):
         res = qf.util.readLabel(tempFile.name, skipHeader=False, separator="\t")
         self.assertEqual({"A": "0", "B": "0", "C": "1", "D": "0"}, res)
 
-    def test_read_label(self):
+    def test_read_coordinates(self):
         tempFile = tempfile.NamedTemporaryFile()
         with open(tempFile.name, "w") as txt:
             txt.write(
@@ -112,7 +116,6 @@ class TestUtil(unittest.TestCase):
                 """)
         res = qf.util.readCoordinates(tempFile.name, skipHeader=True, separator=",")
         self.assertEqual({"A": (0,0.1), "B": (2,1.2), "C": (0,0), "D": (11112.1,1)}, res)
-        tempFile = tempfile.NamedTemporaryFile()
         with open(tempFile.name, "w") as txt:
             txt.write(
                 """A\t0\t0.1
@@ -123,7 +126,28 @@ class TestUtil(unittest.TestCase):
         res = qf.util.readCoordinates(tempFile.name, skipHeader=False, separator="\t")
         self.assertEqual({"A": (0,0.1), "B": (2,1.2), "C": (0,0), "D": (11112.1,1)}, res)
 
+    def test_read_graph_coordinates(self):
+        tempFile = tempfile.NamedTemporaryFile()
+        with open(tempFile.name, "w") as txt:
+            txt.write(
+                """# Ignore this please
+                A,B
+                A,C
+                A,B
+                C,B
+                """)
+        coordinates = {"A": (0,0.1), "B": (2,1.2), "C": (0,0), "D": (11112.1,1)}
+        scale = 5
+        res = qf.util.readGraph(tempFile.name, skipHeader=True, separator=",", dense=False, coordinates=coordinates, scale=scale)
+        for node,d in res.nodes(data=True):
+            self.assertEqual("{},{}!".format(coordinates[node][0] * scale, coordinates[node][1] * scale), d["pos"])
+
+    def test_nmi(self):
+        a={0: 0, 1: 0, 2: 1}
+        b={0: 0, 1: 1, 2: 1}
+        self.assertEqual(1.0, qf.util.nmi(a, a))
+    
     def test_colors(self):
-        self.assertEquals(10, len(qf.util.colors(10)))
+        self.assertEqual(10, len(qf.util.colors(10)))
 
 if __name__ == "__main__": unittest.main()
