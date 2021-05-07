@@ -39,6 +39,11 @@ class TestGraphs(unittest.TestCase):
         H = qf.graphs.lift(G, {0: [0], 1: [0], 2: [6, 7]})
         self.assertEqual(4, H.number_of_nodes())
         self.assertEqual(5, H.number_of_edges())
+        self.assertEqual(set([(0,0), (1,0), (2,6), (2,7)]), set(H.nodes()))
+        for x in H.nodes:
+            self.assertEqual(G.in_degree(x[0]), H.in_degree(x))
+            for s,t in H.in_edges(x):
+                self.assertTrue(G.has_edge(s[0], x[0]))
         
     
 if __name__ == "__main__": unittest.main()

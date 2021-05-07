@@ -177,8 +177,21 @@ def lift(G, fibre):
             addEdgesWithName(H, [((source, w), (target, v), d["label"] + "_" + str(v))])
     return H
 
-# Given a graph and its Cardon-Crochemore labelling, returns the minimum base.
+# 
 def minimum_base(G, node2class):
+    """
+        Given a graph and its Cardon-Crochemore labelling, returns the minimum base. The nodes of the minimum have a name that is
+        chosen as one of the names of the nodes in its fibre. Every node has a "label" attribute that is a representative of its own class, and
+        in parenthesis the cardinality of the fibre; furthermore it has a "multiplicity" attibute that is the cardinality of the fibre.
+        Arcs are labelled as a_x where x is a consecutive number, starting from 0.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            node2class (dict): the equivalence relation returned by `qf.cc.cardon_crochemore(G)`.
+
+        Returns:
+            the minimum base of `G`.
+    """
     B = nx.MultiDiGraph()
     class2node = {c:[x for x,klass in node2class.items() if klass==c][0] for c in node2class.values()}
     B.add_nodes_from(list(set(class2node.values())))
