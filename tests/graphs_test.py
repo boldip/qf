@@ -32,6 +32,13 @@ class TestGraphs(unittest.TestCase):
         self.assertTrue(G.has_edge(1, 3))
         self.assertTrue(G.has_edge(4, 0))
         self.assertFalse(G.has_edge(3, 0))
+
+    def test_lift(self):
+        G = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (2, 0, "d1"), (2, 0, "d2")])
+        H = qf.graphs.lift(G, {0: [0], 1: [0], 2: [6, 7]})
+        self.assertEqual(4, H.number_of_nodes())
+        self.assertEqual(5, H.number_of_edges())
         
     
 if __name__ == "__main__": unittest.main()

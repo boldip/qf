@@ -235,3 +235,12 @@ def to_simple(G):
         H.add_edge(x,y)
     return H
 
+def difference(G, H):
+    GG = nx.MultiDiGraph()
+    for x,y in G.edges():
+        if not H.has_edge(x,y):
+            GG.add_edge(x, y, label="+ {}->{}".format(x,y))
+    for x,y in H.edges():
+        if not G.has_edge(x,y):
+            GG.add_edge(x, y, label="- {}->{}".format(x,y), style="dotted")
+    return GG

@@ -162,6 +162,19 @@ results["Final"]=(ccpn,ccpnmi)
 
 qf.graphs.save(G, args.output_basename + "-orig-final.dot", args.output_basename + "-orig-final.png", colors=ccp)
 
+# Compute and save difference
+Gdif = qf_graphs.difference(Gp, G)
+qf_graphs.save(Gdif, args.output_basename + "-orig-final-diff.dot", args.output_basename + "-orig-final-diff.png", colors=ccp, labelNodes=True, labelArcs=False)
+qf_graphs.save(qf_graphs.to_simple(Gphat), args.output_basename + "-orig-final-base.dot", args.output_basename + "-orig-final-base.png", colors=ccp, labelNodes=False, labelArcs=False)
+
+Bgt, xigt = qf_morph.qf_build(G, gt, verbose=False)
+Ggtp, xigtp = qf_morph.repair(xigt, G, Bgt, verbose=False)
+gtp = qf_cc.cardon_crochemore(Ggtp)
+Ggtphat = qf_graphs.minimum_base(Ggtp, gtp)
+Ggtdif = qf_graphs.difference(Ggtp, G)
+qf_graphs.save(Ggtdif, args.output_basename + "-orig-gt-diff.dot", args.output_basename + "-orig-gt-diff.png", colors=gt, labelNodes=True, labelArcs=False)
+qf_graphs.save(qf_graphs.to_simple(Ggtphat), args.output_basename + "-orig-gt-base.dot", args.output_basename + "-orig-gt-base.png", colors=gtp, labelNodes=False, labelArcs=False)
+
 # Clusters
 logging.info("Writing clustering information")
 with open(args.output_basename + "-clusters.tsv", "w") as txt:
