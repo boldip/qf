@@ -141,7 +141,7 @@ class TestGraphs(unittest.TestCase):
                 th = H.number_of_edges(x, y)
                 self.assertTrue((tg > 0) == (th == 1))
 
-    def test_to_simple(self):
+    def test_difference(self):
         G = nx.MultiDiGraph()
         H = nx.MultiDiGraph()
         n = 50

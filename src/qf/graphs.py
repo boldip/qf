@@ -227,8 +227,8 @@ def scramble(G, nAdd=1, nDel=1, nScr=0):
             newname = e[2]["label"].split("_")[0] + "_" + str(random.randint(10000, 20000))
             addEdgesWithName(H, [(e[0],e[1],newname)])
         else:
-            e = random.choice([e for e in H.edges])
-            H.remove_edge(e[0],e[1])
+            e = random.choice([(u,v,k) for u,v,k in H.edges(keys=True)])
+            H.remove_edge(e[0],e[1],e[2])
     return H        
 
 

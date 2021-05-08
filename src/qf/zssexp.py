@@ -10,7 +10,6 @@ import numpy as np
 import qf.cc
 import qf.graphs
 import qf.util
-import qf.matrices
 import qf.zss
 
 # Generate a graph with n nodes, get its minimum base and then
