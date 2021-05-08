@@ -205,6 +205,20 @@ def minimum_base(G, node2class):
 
 # Adds nAdd, deletes nDel, adds/deletes nScr edges from the graph G, returning the new graph
 def scramble(G, nAdd=1, nDel=1, nScr=0):
+    """ 
+        Returns a new graph with the same nodes as `G` and some arcs removed and some arcs added.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            nAdd (int): the number of arcs to be added.
+            nDel (int): the number of arcs to be removed.
+            nScr (int): the extre number of arcs to be added or removed. At the end the actual
+                number of arcs added and removed will be nAdd+x and nDel+y respectively,
+                where x+y=nScr.
+
+        Returns:
+            the new graph.
+    """
     H = G.copy()
     for i in range(nAdd + nDel + nScr):
         operation = random.choice(["add", "delete"])
@@ -217,20 +231,6 @@ def scramble(G, nAdd=1, nDel=1, nScr=0):
             H.remove_edge(e[0],e[1])
     return H        
 
-
-
-# Given a graph G and another graph B, builds and returns a pair of maps (for nodes and for arcs) as follows.
-# Nodes of G are assumed to be of the form (x,y), and they should be mapped to node x of B.
-# Arcs of G are assumed to be assigned a name ("name") of the form s_n, and they should be mapped to an arc ob B
-# with name s
-def extractLiftingQF(G, B):
-    mn = {}
-    ma = {}
-    for x in G.nodes():
-        mn[x] = x[0]
-    for u, v, d in G.edges(data=True):
-        ma[d["label"]] = d["label"].split("_")[0]
-    return (mn, ma)
 
 def to_simple(G):
     """

@@ -1,6 +1,7 @@
 import unittest
 import networkx as nx
-from numpy import random
+import networkx.linalg.graphmatrix as nxg
+import random
 
 import qf.graphs
 
@@ -44,6 +45,100 @@ class TestGraphs(unittest.TestCase):
             self.assertEqual(G.in_degree(x[0]), H.in_degree(x))
             for s,t in H.in_edges(x):
                 self.assertTrue(G.has_edge(s[0], x[0]))
-        
-    
+
+    def test_minimum_base(self):
+        G = nx.MultiDiGraph()
+        n1 = 50
+        n2 = 20
+        k1 = 4
+        k2 = 2
+        count = 0
+        # n1 nodes have k1+1 incoming arcs (k1 from the same group, 1 from the other)
+        G.add_nodes_from(["a" +  str(x) for x in range(n1)])
+        for x in range(n1):
+            s = random.sample(range(n1), k1)
+            for y in s:
+                qf.graphs.addEdgesWithName(G, [("a" + str(y), "a" + str(x), "arcaa_" + str(y) + "_" + str(x) + "_" + str(count))])
+                count += 1
+        # n2 nodes have k2+2 incoming arcs (k2 from the same group, 2 from the other)
+        G.add_nodes_from(["b" +  str(x) for x in range(n2)])
+        for x in range(n2):
+            s = random.sample(range(n2), k2)
+            for y in s:
+                qf.graphs.addEdgesWithName(G, [("b" + str(y), "b" + str(x), "arcbb_" + str(y) + "_" + str(x) + "_" + str(count))])
+                count += 1
+        # 
+        for x in range(n1):
+            ss = random.sample(range(n2), 1)
+            qf.graphs.addEdgesWithName(G, [("b" + str(ss[0]), "a" + str(x), "arcba_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
+            count += 1
+        # 
+        for x in range(n2):
+            ss = random.sample(range(n1), 2)
+            qf.graphs.addEdgesWithName(G, [("a" + str(ss[0]), "b" + str(x), "arcab_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
+            count += 1
+            qf.graphs.addEdgesWithName(G, [("a" + str(ss[1]), "b" + str(x), "arcab_" + str(ss[1]) + "_" + str(x) + "_" + str(count))])
+            count += 1
+        # Now compute the minimum base
+        B = qf.graphs.minimum_base(G, qf.cc.cardon_crochemore(G))
+        self.assertEqual(2, B.number_of_nodes())
+        self.assertEqual(k1 + k2 + 2 + 1, B.number_of_edges())
+        for x in B.nodes():
+            if len(B.in_edges(x)) == k1 + 1:
+                x1 = x
+            else:
+                x2 = x
+        self.assertEqual(k1, B.number_of_edges(x1, x1))
+        self.assertEqual(k2, B.number_of_edges(x2, x2))
+        self.assertEqual(2, B.number_of_edges(x1, x2))
+        self.assertEqual(1, B.number_of_edges(x2, x1))
+
+    def test_scramble(self):
+        G = nx.MultiDiGraph()
+        n = 50
+        count = 0
+        for x in range(n):
+            k = random.randrange(0, n//2)
+            out = random.sample(range(n), k)
+            for y in out:
+                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                count += 1
+        x1 = random.randrange(0, n//5)
+        x2 = random.randrange(0, n//5)
+        x3 = random.randrange(0, n//5)
+        deleted = 0
+        added = 0
+        H = qf.graphs.scramble(G, x1, x2, x3)
+        self.assertEqual(set(G.nodes()), set(H.nodes()))
+        for x in G.nodes():
+            for y in G.nodes():
+                tg = G.number_of_edges(x, y)
+                th = H.number_of_edges(x, y)
+                if tg > th:
+                    deleted += tg - th
+                else:
+                    added += th - tg
+        self.assertEqual(x1 + x2 + x3, deleted + added)
+        self.assertTrue(added >= x1)
+        self.assertTrue(deleted >= x2)
+
+    def test_to_simple(self):
+        G = nx.MultiDiGraph()
+        n = 50
+        count = 0
+        for x in range(n):
+            k = random.randrange(0, n//2)
+            out = random.sample(range(n), k)
+            for y in out:
+                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                count += 1
+        H = qf.graphs.to_simple(G)
+        self.assertEqual(set(H.nodes()), set(G.nodes()))
+        for x in G.nodes():
+            for y in G.nodes():
+                tg = G.number_of_edges(x, y)
+                th = H.number_of_edges(x, y)
+                self.assertTrue((tg > 0) == (th == 1))
+
+
 if __name__ == "__main__": unittest.main()
