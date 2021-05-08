@@ -154,7 +154,7 @@ def is_epimorphism(f, G, B):
         Check if f is an epimorphism from G to B. Among other things, it also
         checks if f is a morphism.
 
-         Args:
+        Args:
             f (dict): a dictionary with keys the nodes and arc labels of G and values the nodes and arc labels of B.
             G: a `networkx.MultiDiGraph`.
             B: a `networkx.MultiDiGraph`.

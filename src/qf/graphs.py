@@ -60,7 +60,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
         - If `labelNodes` is False, all "label" node attributes are set to "".
         - The rendering for png is performed using `dot` or `fdp` depending on whether nodes have a `pos` attribute or not. 
 
-        Attrs:
+        Args:
             GG: a `nerworkx.MultiDiGraph`; edges should all possess a `label` attribute.
             dot_filename (str): the name of the file where the .dot output will  be written.
             png_filename (str): the name of the file where the .png output will be written.
@@ -110,7 +110,7 @@ def visualize(G, colors=None, labelNodes=True, labelArcs=True):
         - If `labelNodes` is False, all "label" node attributes are set to "".
         - The rendering for png is performed using `dot` or `fdp` depending on whether nodes have a `pos` attribute or not. 
 
-        Attrs:
+        Args:
             G: a `nerworkx.MultiDiGraph`; edges should all possess a `label` attribute.
             colors (dict): if not None, a dictionary from nodes to values (same value mean same color).
             labelNodes (bool): whether labels should appear on nodes (the actual node name).
@@ -133,7 +133,7 @@ def save(G, dot_filename=None, png_filename=None, colors=None, labelNodes=True, 
         - If `labelNodes` is False, all "label" node attributes are set to "".
         - The rendering for png is performed using `dot` or `fdp` depending on whether nodes have a `pos` attribute or not. 
 
-        Attrs:
+        Args:
             G: a `nerworkx.MultiDiGraph`; edges should all possess a `label` attribute.
             dot_filename (str): the name of the file where the .dot output will  be written; if None, the name will be generated.
             png_filename (str): the name of the file where the .png output will be written; if None, the name will be generated.
@@ -177,7 +177,6 @@ def lift(G, fibre):
             addEdgesWithName(H, [((source, w), (target, v), d["label"] + "_" + str(v))])
     return H
 
-# 
 def minimum_base(G, node2class):
     """
         Given a graph and its Cardon-Crochemore labelling, returns the minimum base. The nodes of the minimum have a name that is
