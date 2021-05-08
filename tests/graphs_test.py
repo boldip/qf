@@ -1,6 +1,7 @@
 import unittest
 import networkx as nx
 import networkx.linalg.graphmatrix as nxg
+import math
 import random
 
 import qf.graphs
@@ -139,6 +140,31 @@ class TestGraphs(unittest.TestCase):
                 tg = G.number_of_edges(x, y)
                 th = H.number_of_edges(x, y)
                 self.assertTrue((tg > 0) == (th == 1))
+
+    def test_to_simple(self):
+        G = nx.MultiDiGraph()
+        H = nx.MultiDiGraph()
+        n = 50
+        count = 0
+        for x in range(n):
+            k = random.randrange(0, n//2)
+            out = random.sample(range(n), k)
+            for y in out:
+                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                count += 1
+        for x in range(n):
+            k = random.randrange(0, n//2)
+            out = random.sample(range(n), k)
+            for y in out:
+                qf.graphs.addEdgesWithName(H, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                count += 1
+        D = qf.graphs.difference(G, H)
+        for x in range(n):
+            for y in range(n):
+                tg = G.number_of_edges(x, y)
+                th = H.number_of_edges(x, y)
+                td = D.number_of_edges(x, y)
+                self.assertEqual(abs(tg - th), td)
 
 
 if __name__ == "__main__": unittest.main()

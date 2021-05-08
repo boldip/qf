@@ -249,6 +249,18 @@ def to_simple(G):
     return H
 
 def difference(G, H):
+    """
+        Given two graphs, it returns a new graph with the symmetric difference of the arcs of G and H.
+        Arcs are labelled with "+ x->y" or "- x->y" where x is the source, y is the target, and +/-
+        tells whether the arc is in G-H (+) or in H-G (-).
+
+        Args:
+            G: a multidigraph `networkx.MultiDiGraph`.
+            H: a multidigraph `networkx.MultiDiGraph`.
+
+        Returns:
+            A multidigraph as described above.
+    """
     GG = nx.MultiDiGraph()
     for x,y in G.edges():
         if not H.has_edge(x,y):
