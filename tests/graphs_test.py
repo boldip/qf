@@ -1,9 +1,9 @@
-import unittest
-import networkx as nx
-import networkx.linalg.graphmatrix as nxg
 import math
 import random
+import unittest
 
+import networkx as nx
+import networkx.linalg.graphmatrix as nxg
 import qf.graphs
 
 
@@ -131,7 +131,6 @@ class TestGraphs(unittest.TestCase):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
-                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         H = qf.graphs.to_simple(G)
         self.assertEqual(set(H.nodes()), set(G.nodes()))

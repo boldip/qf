@@ -1,10 +1,11 @@
-import networkx as nx
-from networkx.drawing.nx_agraph import write_dot
-import matplotlib as mpl
 import random
 from collections import Counter
-from sklearn.cluster import DBSCAN
+
+import matplotlib as mpl
+import networkx as nx
 import numpy as np
+from networkx.drawing.nx_agraph import write_dot
+from sklearn.cluster import DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score
 
 

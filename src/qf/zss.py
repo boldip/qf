@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-import zss
 import networkx as nx
 import random
 import numpy as np

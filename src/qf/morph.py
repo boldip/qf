@@ -1,3 +1,10 @@
+"""
+    All the functions in this module require that the input
+    graphs have their arcs labelled (with an attribute called "label").
+    Labels must be distinct and also disjoint from the names used
+    for the nodes.
+"""
+
 
 import random
 import statistics
@@ -11,18 +18,23 @@ from sklearn.cluster import DBSCAN
 
 import qf.cc
 import qf.graphs
-import qf.matrices
 import qf.util
 import qf.zss
 import qf.zssexp
 
-# All the functions in this package require that the input
-# graphs have their arcs labelled (with an attribute called "label").
-# Labels must be distinct and also disjoint from the names used
-# for the nodes.
 
-# Returns the source in G of the arc labelled a.
+
 def source(G, a):
+    """
+        Returns the source in G of the arc labelled a.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            a: the label of an arc.
+
+        Returns:
+            the source of the arc.
+    """
     t=[(x,y,d) for (x,y,d) in G.edges(data=True) if d["label"]==a]
     if len(t) != 1:
         return None
@@ -30,33 +42,81 @@ def source(G, a):
 
 # Returns the source in G of the arc labelled a.
 def target(G, a):
+    """
+        Returns the target in G of the arc labelled a.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            a: the label of an arc.
+
+        Returns:
+            the target of the arc.
+    """
     t=[(x,y,d) for (x,y,d) in G.edges(data=True) if d["label"]==a]
     if len(t) != 1:
         return None
     return t[0][1]
 
-# Returns the set of all arc (labels) of G.
 def arcs(G):
+    """
+        Returns the set of labels of the arcs in G.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+
+        Returns:
+            the set of labels of the arcs.
+    """
     return set([d["label"] for (a,b,d) in G.edges(data=True)])
 
-# Returns the tuple (x,y,key) of the arc of G with label a
 def get_arc(G, a):
+    """
+        Returns the tuple (x,y,key) of the arc of G with label a.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            a: the label of an arc.
+
+        Returns:
+            the triple (x,y,key) where x is the arc source, y is its target 
+            and key its key.
+    """
     x,y,k,d = [(x,y,k,d) 
                for (x,y,k,d) in G.edges(data=True, keys=True) 
                if d["label"]==a][0]
     return x,y,k
 
-# Returns a new arc label for G (not yet present)
+# 
 def new_arc_label(G):
+    """
+        Returns a new arc label for G (not yet present).
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+
+        Returns:
+            a label not belonging to the set of labels of the arcs of G.
+    """
     Ga = arcs(G)
-    result = "new_arc_" + str(random.randrange(1000))
+    result = "new_arc_" + str(random.randint(0, 1E9))
     while result in Ga:
-        result = "new_arc_" + str(random.randrange(1000))
+        result = "new_arc_" + str(random.randint(0, 1E9))
     return result
 
-# Checks if f is a morphism between G and B; it must be a dictionary mapping 
-# nodes to nodes and arcs (i.e. arc labels) to arcs (arc labels).
 def is_morphism(f, G, B):
+    """
+        Checks if f is a morphism between G and B; it must be a dictionary mapping 
+        nodes to nodes and arcs (i.e. arc labels) to arcs (arc labels).
+
+        Args:
+            f (dict): a dictionary with keys the nodes and arc labels of G and values the nodes and arc labels of B.
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+
+        Returns:
+            true iff the function is defined on all nodes, on all arcs, and the values are compatible as in the definition
+            of a morphism. 
+    """
     Ge = arcs(G)
     Be = arcs(B)
     # Check that maps nodes to nodes and arcs to arcs
@@ -89,9 +149,19 @@ def is_morphism(f, G, B):
                 return False
     return True
 
-# Check if f is an epimorphism from G to B. Among other things, it also
-# checks if f is a morphism.
 def is_epimorphism(f, G, B):
+    """
+        Check if f is an epimorphism from G to B. Among other things, it also
+        checks if f is a morphism.
+
+         Args:
+            f (dict): a dictionary with keys the nodes and arc labels of G and values the nodes and arc labels of B.
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+
+        Returns:
+            true iff the function is a morphism, and the value set contains all nodes and all arcs of B. 
+    """
     if not is_morphism(f, G, B):
         return False
     if set(B.nodes) != set(f[x] for x in G.nodes):

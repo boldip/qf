@@ -1,8 +1,8 @@
 import unittest
-import networkx as nx
-from numpy import random
 
+import networkx as nx
 import qf.cc
+from numpy import random
 
 
 class TestCc(unittest.TestCase):
