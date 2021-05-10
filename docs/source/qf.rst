@@ -44,10 +44,10 @@ qf.util module
    :undoc-members:
    :show-inheritance:
 
-qf.zss module
--------------
+qf.qzss module
+--------------
 
-.. automodule:: qf.zss
+.. automodule:: qf.qzss
    :members:
    :undoc-members:
    :show-inheritance:

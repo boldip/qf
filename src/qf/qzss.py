@@ -53,7 +53,7 @@ def inTree(G, target, maxLen):
 
 def zssAllPaths(G, target, maxLen, nodeColoring=None):
     """
-        Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label ("x"), unless
+        Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label, unless
         `nodeColoring` is specified (in which case the value of the map is used).
 
         Args:
@@ -184,37 +184,72 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
 
         Returns:
             The result returned is the same as in `agclust`, but the first component is a dictionary with 
-            keys the number of clusters and values are a pair made by the the corresponding clustering and the silhouette score.
+            keys the number of clusters and values are a pair made by the the corresponding clustering and the silhouette score. Note 
+            that if for some specific number of clusters the clustering procedure raises an exception, we just avoid
+            adding the corresponding result to the dictionary.
     """
     if M is None:
         M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring)
     res = {}
     for cl in range(minCl, maxCl):
-        clustering = sklearn.cluster.AgglomerativeClustering(
-            affinity="precomputed", linkage=linkage_type, 
-            n_clusters=cl, compute_distances=True)
-        clustering.fit(M)
-        silhouette = sklearn.metrics.silhouette_score(M, clustering.labels_, metric="precomputed")
-        res[cl]=(clustering, silhouette)
+        try:
+            clustering = sklearn.cluster.AgglomerativeClustering(
+                affinity="precomputed", linkage=linkage_type, 
+                n_clusters=cl, compute_distances=True)
+            clustering.fit(M)
+            silhouette = sklearn.metrics.silhouette_score(M, clustering.labels_, metric="precomputed")
+            res[cl]=(clustering, silhouette)
+        except:
+            pass
     return (res, M, nodes, indices)
 
-# Given a graph G, it computes all zss distances for trees of height t, and produces an agglomerative
-# clustering with a number of clusters computed as follows: all numbers between 2 and the number of nodes of
-# G is tried, every time the silhouette is computed, and at the end the 
-# cluster with maximum silhouette is used.
-# If M is provided, it must be provided along with nodes and indices and that matrix is used instead.
-# The result returned is the same as in agclust.
-def agclustOptcl(G, t, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average"):
-    minCl = min(4, G.number_of_nodes())
-    res, M, nodes, indices = agclustVarcl(G, t, minCl, G.number_of_nodes(), M, nodes, indices, nodeColoring, linkage_type)
+def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average"):
+    """
+        Given a graph G, it computes a clustering (calling `agclust`)
+        clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
+        For every clustering the resulting silhouette score is computed (`sklearn.metrics.silhouette_score`),
+        and the first clustering producing the maximal silhouette is returned (in the same form as in
+        `agclust`.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            t (int): the truncation depth (used only if M is not None).
+            minCl (int): the minimum number of clusters to be produced (inclusive).
+            maxCl (int): the maximum number of clusters to be produced (exclusive).
+            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
+            indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
+            nodeColoring (dict): used to compute the distance matrix (when M is not None).
+            linkage_type (str): the linkage type used to compute distances.
+
+        Returns:
+            a tuple (clustering, M, nodes, indices):
+            - clustering as returned by `sklearn.cluster.AgglomerativeClustering` (labels are stored in the list `clustering.labels_`)
+            - M the matrix used for clustering
+            - nodes the list of nodes used to index M
+            - indices the dictionary from nodes to indices.
+    """
+    res, M, nodes, indices = agclustVarcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type)
     maxsilhouette=max([v[1] for v in res.values()])
     for optCl in res.keys():
         if res[optCl][1]==maxsilhouette:
             break
     return (res[optCl][0], M, nodes, indices)
 
-# Given the results of agclust, produces a labelling for the nodes of G (a map from nodes to clusters).
+# 
 def agclust2dict(clustering, M, nodes, indices):
+    """
+        Given the results of agclust, produces a labelling for the nodes of G (a map from nodes to clusters).
+
+        Args:
+            clustering: a clustering as returned by `sklearn.cluster.AgglomerativeClustering` (labels are stored in the list `clustering.labels_`)
+            M (`numpy.ndarray`): the distance matrix used to compute the clustering (ignored by this function).
+            nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
+            indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
+
+        Returns:
+            a dictionary whose keys are nodes, and where two keys are associated the same value iff they belong to the same cluster.
+    """
     return {x: clustering.labels_[indices[x]] for x in nodes}
         
     

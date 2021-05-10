@@ -81,5 +81,44 @@ class TestZss(unittest.TestCase):
         self.assertEqual(4, M[indices[0], indices[1]])
         self.assertEqual(4, M[indices[1], indices[0]])
 
+    def test_zssDist(self):
+        G = nx.MultiDiGraph()
+        # Union of bouquets with the following degrees
+        deg = [1, 2, 4, 5]
+        n = len(deg)
+        count = 0
+        for x in range(n):
+            for i in range(deg[x]):
+                qf.graphs.addEdgesWithName(G, [(x, x, "a_{}_{}".format(x, count))])
+                count += 1
+        M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, 2)
+        res = {}
+        for cl in range(1, 5):
+            clustering, _M, _nodes, _indices = qf.qzss.agclust(G, 2, cl)
+            self.assertEqual(set(nodes), set(_nodes))
+            for x in nodes:
+                for y in nodes:
+                    self.assertEqual(M[indices[x], indices[y]], _M[_indices[x], _indices[y]])
+            res[cl] = clustering.labels_
+        # 1 cluster
+        for x in nodes:
+            for y in nodes:
+                self.assertEqual(res[1][indices[x]], res[1][indices[y]])
+        # 2 clusters
+        self.assertEqual(res[2][indices[0]], res[2][indices[1]])
+        self.assertEqual(res[2][indices[2]], res[2][indices[3]])
+        self.assertNotEqual(res[2][indices[0]], res[2][indices[2]])
+        # 3 clusters (not clear how merging)
+        # 4 clusters        
+        self.assertNotEqual(res[4][indices[0]], res[4][indices[1]])
+        self.assertNotEqual(res[4][indices[0]], res[4][indices[2]])
+        self.assertNotEqual(res[4][indices[0]], res[4][indices[3]])
+        # Varying number of clusters: optimal silhouette is for 2
+        c, _M, _nodes, _indices = qf.qzss.agclustOptcl(G, 2, 1, 5)
+        d = qf.qzss.agclust2dict(c, _M, _nodes, _indices)
+        self.assertEqual(set([0, 1, 2, 3]), d.keys())
+        self.assertEqual(d[0], d[1])
+        self.assertEqual(d[2], d[3])
+        self.assertNotEqual(d[0], d[2])
 
 if __name__ == "__main__": unittest.main()
