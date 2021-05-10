@@ -10,6 +10,7 @@ import random
 import statistics
 from collections import Counter
 
+import logging
 import matplotlib as mpl
 import networkx as nx
 import numpy as np
@@ -122,30 +123,30 @@ def is_morphism(f, G, B):
     # Check that maps nodes to nodes and arcs to arcs
     for k,v in f.items():
         if not(k in G.nodes) and not(k in Ge):
-            print("Wrong key: {}".format(k))
+            logging.warning("Wrong key: {}".format(k))
             return False
         if not(v in B.nodes) and not(v in Be):
-            print("Wrong value: {}".format(v))
+            logging.warning("Wrong value: {}".format(v))
             return False
         if (k in G.nodes) != (v in B.nodes):
-            print("Type mismatch: {} vs. {}".format(k,v))
+            logging.warning("Type mismatch: {} vs. {}".format(k,v))
             return False
     # Check that all nodes and arcs are mapped
     for x in G.nodes():
         if not(x in f.keys()):
-            print("Node {} not mapped".format(x))
+            logging.warning("Node {} not mapped".format(x))
             return False
     for a in Ge:
         if not(a in f.keys()):
-            print("Arc {} not mapped".format(a))
+            logging.warning("Arc {} not mapped".format(a))
             return False
     for a in f.keys():
         if a in Ge:
             if f[source(G,a)] != source(B,f[a]):
-                print("Source of {}={}, source of {}={}".format(a,source(G,a),f[a],source(B,f[a])))
+                logging.warning("Source of {}={}, source of {}={}".format(a,source(G,a),f[a],source(B,f[a])))
                 return False
             if f[target(G,a)] != target(B,f[a]):
-                print("Target of {}={}, target of {}={}".format(a,target(G,a),f[a],target(B,f[a])))
+                logging.warning("Target of {}={}, target of {}={}".format(a,target(G,a),f[a],target(B,f[a])))
                 return False
     return True
 
@@ -165,15 +166,90 @@ def is_epimorphism(f, G, B):
     if not is_morphism(f, G, B):
         return False
     if set(B.nodes) != set(f[x] for x in G.nodes):
-        print("Not epimorphic on nodes")
+        logging.warning("Not epimorphic on nodes")
         return False
     if arcs(B) != set(f[a] for a in arcs(G)):
-        print("Not epimorphic on arcs")
+        logging.warning("Not epimorphic on arcs")
         return False
     return True
 
-# Computes the excess and deficiency of f: G to B.
+def is_isomorphism(f, G, B):
+    """
+        Check if f is an isomorphism from G to B. Among other things, it also
+        checks if f is a morphism.
+
+        Args:
+            f (dict): a dictionary with keys the nodes and arc labels of G and values the nodes and arc labels of B.
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+
+        Returns:
+            true iff the function is an isomorphism.
+    """
+    if not is_epimorphism(f, G, B):
+        return  False
+    # Injective on nodes
+    for x in G.nodes():
+        for y in G.nodes():
+            if x != y and f[x] == f[y]:
+                return False
+    # Injective on arcs
+    for a in qf.morph.arcs(G):
+        for b in qf.morph.arcs(G):
+            if a != b and f[a] == f[b]:
+                return False
+    return True
+
+def is_compatible(G, Gp, f=None, fp=None):
+    """
+        Check if G and Gp are compatible (i.e., same node set, compatible source/target for common arcs);
+        unless they are None, the function also checks that f and fp have the same value on common arcs and nodes.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            Gp: a `networkx.MultiDiGraph`.
+            f (dict): a dictionary representing a morphism from G to some other graph (see `is_morphism`), or None.
+            fp (dict): a dictionary representing a morphism from Gp to some other graph (see `is_morphism`), or None.
+
+        Returns:
+            true iff G and Gp are compatible, and same for f and fp.
+    """
+    if (f is None) != (fp is None):
+        raise Exception("Either both f and fp are None, or neither") 
+    if G.nodes() != Gp.nodes():
+        return False
+    if f is not None:
+        for x in G.nodes():
+            if f[x] != fp[x]:
+                return False
+    for a in qf.morph.arcs(G) & qf.morph.arcs(Gp):
+        if qf.morph.source(G, a) != qf.morph.source(Gp, a):
+            return False
+        if qf.morph.target(G, a) != qf.morph.target(Gp, a):
+            return False
+        if f is not None and f[a] != fp[a]:
+            return False
+    return True
+
+
 def excess_deficiency(f, G, B, verbose=False):
+    """
+        Given a morphism f from G to B, computes and returns its excess and deficiency. These two measures are defined
+        locally for any given pair (a,x) where a is an arc of B and x is a node of G with f(x) being the target of a:
+        for the specific pair (a,x), count the number of arcs a' of G such that f(a')=a and the target of a' is x.
+        If this count is larger than one, the difference with one is called the *local excess*. If the count is zero,
+        we say that one is the *local deficiency*. The sum of all local excesses and local deficiencies over all the
+        pairs (a,x) is called the excess and deficiency. By definition, excess and deficiency is zero iff f is a fibration.
+
+        Args:
+            f (dict): a morphism from G to B (see `is_morphism`).
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+            verbose (bool): if True, local non-null excesses and deficiencies are printed out.
+
+        Returns:
+            (x,d) (a pair of int), where x is the excess and d is the deficiency.
+    """
     deficiency = 0
     excess = 0
     for a in arcs(B):
@@ -191,16 +267,48 @@ def excess_deficiency(f, G, B, verbose=False):
                 excess += len(ts) - 1
     return (excess, deficiency)
 
-# Determines if f: G to B is a fibration
 def is_fibration(f, G, B):
+    """
+        Determines if a dictionary is a fibration. It also checks if it is a morphism.
+
+        Args:
+            f (dict): a dictionary representing a morphism (see `is_morphism`).
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+
+        Returns:
+            True iff f is a morphism and a fibration.
+    """
     if not is_morphism(f, G, B):
         return False
     excess, deficiency = excess_deficiency(f, G, B)
     return excess+deficiency == 0
 
-# Repairs a quasifibration f: G->B to a fibration f": G"->B.
-# If seed=None a new random seed is set.
 def repair(f, G, B, seed=0, verbose=False):
+    """
+        This is the implementation of GraphRepair. Given a morphism f: G->B with excess x and deficiency d,
+        it will build a new compatible graph G' (i.e., with the same nodes as G and such that the common arcs, if any, have the same source
+        and target as in G) and a new morphism f': G'->B such that: 
+        - the symmetric difference between the arcs of G and the arcs of G' has cardinality x+d
+        - f is defined in the same way as f' on all nodes and on common arcs
+        - f' is a fibration.
+
+        The construction of G' and f' are partly non-deterministic. For this reason, randomness is used.
+
+        Args:
+            f (dict): a morphism (see `is_morphism`).
+            G: a `networkx.MultiDiGraph`.
+            B: a `networkx.MultiDiGraph`.
+            seed (int): the seed used for the non-deterministic part. If None, a new random seed is set.
+            verbose (bool): if True, removed or added arcs are printed out.
+
+        Returns:
+            a pair (Gp, fp) where Gp is a `networkx.MultiDiGraph` and fp is a dict, as described above.
+
+    """
+    if seed is None:
+        seed = random.randrange(sys.maxsize)
+        logging.info("Seed for repair set to {}".format(seed))
     random.seed(seed)
     Gp = G.copy()
     fp = f.copy()
@@ -208,18 +316,18 @@ def repair(f, G, B, seed=0, verbose=False):
         ta = target(B, a)
         targetsa = set([x for x in G.nodes if f[x]==ta])
         for x in targetsa:
-            ts = set([ap for ap in arcs(G) if f[ap]==a and target(G, ap)==x])
+            ts = [ap for ap in arcs(G) if f[ap]==a and target(G, ap)==x]
             if len(ts) == 1:
                 continue
             if len(ts) == 0:
                 a_to_add = new_arc_label(Gp)
-                src = random.sample(set([s for s in G.nodes if f[s]==source(B,a)]),1)[0]
+                src = random.sample([s for s in G.nodes if f[s]==source(B,a)],1)[0]
                 qf.graphs.addEdgesWithName(Gp,[(src, x, a_to_add)])
                 if verbose:
                     print("Adding arc {}: {} -> {} (mapped to {})".format(a_to_add, src, x, a))
                 fp[a_to_add] = a
             else:
-                ts = ts.difference(random.sample(ts,1))
+                ts = list(set(ts).difference(random.sample(ts,1)))
                 for a_to_remove in ts:
                     xr,yr,kr = get_arc(Gp, a_to_remove)
                     if verbose:
@@ -228,10 +336,24 @@ def repair(f, G, B, seed=0, verbose=False):
                     del fp[a_to_remove]
     return (Gp, fp)
 
-# Given a graph G and a labelling c (i.e., an equivalence relation on
-# its nodes), build a graph B and a quasi-fibration f: G -> B with
-# minimal total error
 def qf_build(G, c, verbose=False):
+    """
+        This is the implementation of QFBuild. Given an equivalence relation c on the nodes of G (represented as a dict: the keys are nodes and two
+        nodes are equivalent iff they have the same value), build a graph B and a morphism f: G->B with the following properties:
+        - the node fibres of f (i.e., counterimages of nodes) are the equivalence classes of c
+        - there is no other f': G->B' with smaller excess+deficiency.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            c (dict): an equivalence relation on the nodes of G; the keys are nodes, and two nodes are equivalent iff they have the same values
+            verbose (bool): if True, for any pair of equivalence classes X and Y, if there is at least one arc from a node of X to a node of Y,
+                a line is printed with X, Y and the list of the 
+                number of arcs from (any node of) X to every specific node of Y; the resulting median is also printed.
+
+        Returns:
+            a pair (B, f) where B is a `networkx.MultiDiGraph` and f is a dict, as described above.
+
+    """
     B = nx.MultiDiGraph()
     f = {}
     classes = set(c.values())

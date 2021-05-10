@@ -8,7 +8,7 @@ import qf.graphs
 import qf.morph
 
 
-class TestGraphs(unittest.TestCase):
+class TestMorph(unittest.TestCase):
 
     def test_source_target_arcs_new(self):
         G = nx.MultiDiGraph()
@@ -51,5 +51,63 @@ class TestGraphs(unittest.TestCase):
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, double_loop)) # Not epi on arcs
         self.assertTrue(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop)) 
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop_and_node)) # Not epi on nodes
+
+    def test_excess_deficiency(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(back_forth, [(0, 1, "a"), (1, 0, "b")])
+        single_loop = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(single_loop, [(0, 0, "a")])
+        f = {0: 0, 1: 0, "a": "a", "b": "a"}   # a fibration from back_forth to single_loop
+        x, d = qf.morph.excess_deficiency(f, back_forth, single_loop)
+        self.assertEqual(0, x)
+        self.assertEqual(0, d)
+        double_loop = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(double_loop, [(0, 0, "a"), (0, 0, "b")])
+        f = {0: 0, 1: 0, "a": "a", "b": "b"}   # two missing liftings from back_forth to double_loop
+        x, d = qf.morph.excess_deficiency(f, back_forth, double_loop)
+        self.assertEqual(0, x)
+        self.assertEqual(2, d)
+        f = {0: 0, "a": "a", "b": "a"}  # one excess lifting from double_loop to single_loop
+        x, d = qf.morph.excess_deficiency(f, double_loop, single_loop)
+        self.assertEqual(1, x)
+        self.assertEqual(0, d)
+
+
+    def test_repair(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(back_forth, [(0, 1, "a"), (1, 0, "b")])
+        single_loop = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(single_loop, [(0, 0, "a")])
+        f = {0: 0, 1: 0, "a": "a", "b": "a"}   # a fibration from back_forth to single_loop
+        Gp, fp = qf.morph.repair(f, back_forth, single_loop)
+        self.assertEqual(f, fp)
+        self.assertTrue(qf.morph.is_compatible(back_forth, Gp, f, fp))
+        self.assertEqual(qf.morph.arcs(back_forth), qf.morph.arcs(Gp))
+        double_loop = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(double_loop, [(0, 0, "a"), (0, 0, "b")])
+        f = {0: 0, 1: 0, "a": "a", "b": "b"}   # two missing liftings from back_forth to double_loop
+        Gp, fp = qf.morph.repair(f, back_forth, double_loop)
+        self.assertTrue(qf.morph.is_compatible(back_forth, Gp, f, fp))
+        self.assertEqual(2, len(qf.morph.arcs(Gp) - qf.morph.arcs(back_forth)))
+        self.assertEqual(0, len(qf.morph.arcs(back_forth) - qf.morph.arcs(Gp)))
+        self.assertTrue(qf.morph.is_fibration(fp, Gp, double_loop))
+        f = {0: 0, "a": "a", "b": "a"}  # one excess lifting from double_loop to single_loop
+        Gp, fp = qf.morph.repair(f, double_loop, single_loop)
+        self.assertTrue(qf.morph.is_compatible(double_loop, Gp, f, fp))
+        self.assertEqual(0, len(qf.morph.arcs(Gp) - qf.morph.arcs(double_loop)))
+        self.assertEqual(1, len(qf.morph.arcs(double_loop) - qf.morph.arcs(Gp)))
+        self.assertTrue(qf.morph.is_fibration(fp, Gp, single_loop))
+
+    def test_qf_build(self):
+        two_one = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(two_one, [(0, 1, "a1"), (0, 1, "a2"), (1, 0, "b")])
+        B, f = qf.morph.qf_build(two_one, {0: 0, 1: 1})  # Returns an isomorphic graph
+        self.assertTrue(qf.morph.is_isomorphism(f, two_one, B))
+        two_one = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(two_one, [(0, 1, "a1"), (0, 1, "a2"), (1, 0, "b")])
+        B, f = qf.morph.qf_build(two_one, {0: 0, 1: 0})  # A loop 
+        self.assertTrue(1, B.number_of_nodes())
+        self.assertTrue(2, B.number_of_edges())
+        qf.morph.is_epimorphism(f, two_one, B)
 
 if __name__ == "__main__": unittest.main()

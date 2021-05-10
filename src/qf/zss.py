@@ -3,22 +3,43 @@ import random
 import numpy as np
 import sklearn.cluster
 
-# Returns an iterator for all paths in G of length <=maxLen with given target. Any such path will be returned
-# as a list $[x_1,k_1,...,x_n,k_n,x_{n+1}]$ where $x_{n+1}=target$, $0<=n<=maxLen$, $(x_i,x_{i+1})$ is
-# an arc with key $k_i$ (for all $i=1,...,n$).
 def allPaths(G, target, maxLen):
-    if maxLen == 0:
-        yield [target]
-    else:
-        for s,t,k in G.in_edges(target, keys=True):
-            for p in allPaths(G, s, maxLen - 1):
-                yield p + [k, target]
-        for p in allPaths(G, target, maxLen - 1):
-            yield p
+    """
+        Returns an iterator for all paths in G of length <=maxLen with given target. Any such path will be returned
+        as a list [x_1,k_1,...,x_n,k_n,x_{n+1}] where x_{n+1}=target, 0<=n<=maxLen, (x_i,x_{i+1}) is
+        an arc with key k_i (for all i=1,...,n).
 
-# Returns a (simple) multidigraph whose nodes are the paths as returned by allPaths(G, target, maxLen), 
-# and with an arc from $[x_1,k_1,...,x_n,k_n,x_{n+1}]$ to $[x_2,k_2,...,x_n,k_n,x_{n+1}]$ for all $n>0$.
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            target: a node of G.
+            maxLen (int): the maximum length of the paths returned.
+
+        Returns:
+            an iterator that returns lists; each returned list will be a non-empty sequence alteranting nodes and arcs of G
+            (starting and ending with a node, the last node will always be target) and containing no more than maxLen arcs.
+            Every arc will have source equal to the node immediately preceding it, and target equal to the node immediately
+            following it. All such lists will be returned, and none of them will be returned more than once. 
+
+    """
+    if maxLen > 0:
+        for s,t,d in G.in_edges(target, data=True):
+            for p in allPaths(G, s, maxLen - 1):
+                yield p + [d["label"], target]
+    yield [target]
+
 def inTree(G, target, maxLen):
+    """
+        Returns a (simple) multidigraph whose nodes are the paths as returned by allPaths(G, target, maxLen), 
+        and with an arc from [x_1,k_1,...,x_n,k_n,x_{n+1}] to [x_2,k_2,...,x_n,k_n,x_{n+1}] for all n>0.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            target: a node of G.
+            maxLen (int): the maximum length of the paths returned.
+
+        Returns:
+            see above. The graph is the universal total graph of target truncated at depth maxLen.
+    """
     Gres = nx.MultiDiGraph()
     if maxLen == 0:
         Gres.add_node(str([target]))
