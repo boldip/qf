@@ -13,7 +13,7 @@ import qf.cc
 import qf.graphs
 import qf.util
 import qf.matrices
-import qf.zss
+import qf.qzss
 import qf.zssexp
 import qf.morph
 import sys
@@ -103,12 +103,12 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 #Compute agglomerative clustering on the pure ZSS matrix
 # ZSS matrix
 for linkage_type in ["single", "average", "complete"]:
-    M, nodes, indices = qf.zss.cachedZssDistMatrix(G, depth)        
+    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.zss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
-    bestc = qf.zss.agclust2dict(c, _M, nodes, indices)
+    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
+    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
     description="Agglomerative (linkage={})".format(linkage_type)
@@ -124,8 +124,8 @@ for linkage_type in ["single", "average", "complete"]:
 
     #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
 
-    c, _M, nodes, indices = qf.zss.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type)
-    bestcex = qf.zss.agclust2dict(c, _M, nodes, indices)
+    c, _M, nodes, indices = qf.qzss.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type)
+    bestcex = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcexn = len(set(bestcex.values()))
     bestcexnmi = qf.util.nmi(gt, bestcex)
     description="Agglomerative exact (linkage={}) [*]".format(linkage_type)

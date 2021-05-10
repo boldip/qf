@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 
-import networkx as nx
-from networkx.drawing.nx_agraph import write_dot
+import argparse
+import logging
+import random
+import sys
+from collections import Counter
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import random
-from collections import Counter
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import KMeans
+import networkx as nx
 import numpy as np
+from IPython import get_ipython
+from networkx.drawing.nx_agraph import write_dot
+from sklearn.cluster import DBSCAN, KMeans
+
 import qf.cc
 import qf.graphs
-import qf.util
 import qf.matrices
-import qf.zss
-import qf.zssexp
 import qf.morph
-import sys
-import argparse
-from IPython import get_ipython
-import logging
+import qf.qzss
+import qf.util
+import qf.zssexp
 
 if __name__ != "__main__":
 	exit()
@@ -119,12 +120,12 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 # ZSS matrix
 logging.info("Running Agglomerative Clustering")
 for linkage_type in ["single"]:
-    M, nodes, indices = qf.zss.cachedZssDistMatrix(G, depth)        
+    M, nodes, indices = qf.qzss.cachedzssDistMatrix(G, depth)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.zss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
-    bestc = qf.zss.agclust2dict(c, _M, nodes, indices)
+    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
+    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
     description="Agglomerative (linkage={})".format(linkage_type)

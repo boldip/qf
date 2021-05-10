@@ -18,7 +18,6 @@ class TestGraphs(unittest.TestCase):
         self.assertTrue(G.has_edge(1, 2))
         self.assertTrue(G.has_edge(1, 3))
         self.assertTrue(G.has_edge(4, 0))
-        print("***", G.get_edge_data(4, 0))
         self.assertEqual("f", G.get_edge_data(4, 0)[0]["label"])
 
     def test_remove_edges_with_names(self):
