@@ -2,6 +2,7 @@ import networkx as nx
 import random
 import numpy as np
 import sklearn.cluster
+import zss
 
 def allPaths(G, target, maxLen):
     """
@@ -38,7 +39,7 @@ def inTree(G, target, maxLen):
             maxLen (int): the maximum length of the paths returned.
 
         Returns:
-            see above. The graph is the universal total graph of target truncated at depth maxLen.
+            see above. The graph is the universal total graph of target truncated at depth
     """
     Gres = nx.MultiDiGraph()
     if maxLen == 0:
@@ -50,8 +51,20 @@ def inTree(G, target, maxLen):
     return Gres
 
 
-# Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label ("x").
 def zssAllPaths(G, target, maxLen, nodeColoring=None):
+    """
+        Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label ("x").
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            target: a node of G.
+            maxLen (int): the maximum length of the paths returned.
+
+        Returns:
+            a zss.Node that is the root of a tree isomorphic to the universal total graph of G at target, truncated at
+            maxLen.
+
+    """
     if nodeColoring is None:
         node = zss.Node("x")
     else:

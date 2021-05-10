@@ -10,7 +10,7 @@ import numpy as np
 import qf.cc
 import qf.graphs
 import qf.util
-import qf.zss
+import qf.qzss
 
 # Generate a graph with n nodes, get its minimum base and then
 # lift every node with a fibre of [vmin..vmax] elements.
@@ -62,8 +62,8 @@ def bigExperiment(expno = float("inf"), depth = 2, n = 10, vmin = 1, vmax = 5, r
         if groundTruthSize == 0:
             continue
         ccLab = qf.cc.cardon_crochemore(Ls)                                      
-        clustering, M, nodes, indices = qf.zss.agclust(Ls, depth, groundTruthSize)
-        agLab = qf.zss.agclust2dict(clustering, M, nodes, indices)
+        clustering, M, nodes, indices = qf.qzss.agclust(Ls, depth, groundTruthSize)
+        agLab = qf.qzss.agclust2dict(clustering, M, nodes, indices)
         print(i, len(Ls.nodes), len(Ls.edges), rem, qf.util.nmi(groundTruthLab, ccLab), qf.util.nmi(groundTruthLab, agLab), flush=True)
         i += 1
 
@@ -94,8 +94,8 @@ def bigExperimentCl(expno = float("inf"), depth = 2, n = 10, vmin = 1, vmax = 5,
         if groundTruthSize == 0:
             continue
         ccLab = qf.cc.cardon_crochemore(Ls)                                      
-        clustering, M, nodes, indices = qf.zss.agclustOptcl(Ls, depth)
-        agLab = qf.zss.agclust2dict(clustering, M, nodes, indices)
+        clustering, M, nodes, indices = qf.qzss.agclustOptcl(Ls, depth)
+        agLab = qf.qzss.agclust2dict(clustering, M, nodes, indices)
         print(i, len(Ls.nodes), len(Ls.edges), rem, qf.util.nmi(groundTruthLab, ccLab), qf.util.nmi(groundTruthLab, agLab), flush=True)
         i += 1
 

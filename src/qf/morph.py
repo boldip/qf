@@ -20,7 +20,7 @@ from sklearn.cluster import DBSCAN
 import qf.cc
 import qf.graphs
 import qf.util
-import qf.zss
+import qf.qzss
 import qf.zssexp
 
 
