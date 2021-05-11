@@ -91,7 +91,7 @@ else:
         coords = qf.util.readCoordinates(args.coord, skipHeader=args.coord_skip_header, separator=args.coord_separator)    
     G = qf.util.readGraph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense, coordinates=coords)
     if args.ground is None:
-        gt = qf.cc.cardon_crochemore(G)
+        raise Exception("No ground truth available for real graph")
     else:
         gt = qf.util.readLabel(args.ground, skipHeader=args.ground_skip_header, separator=args.ground_separator)
     gtn = len(set(gt.values()))
@@ -123,7 +123,7 @@ for linkage_type in ["single"]:
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, len(nodes), nM, nodes, indices, linkage_type=linkage_type)
     bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
