@@ -16,7 +16,6 @@ from sklearn.cluster import DBSCAN, KMeans
 
 import qf.cc
 import qf.graphs
-import qf.matrices
 import qf.morph
 import qf.qzss
 import qf.util

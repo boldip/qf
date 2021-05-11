@@ -12,7 +12,6 @@ import numpy as np
 import qf.cc
 import qf.graphs
 import qf.util
-import qf.matrices
 import qf.qzss
 import qf.zssexp
 import qf.morph
