@@ -54,6 +54,28 @@ class TestZss(unittest.TestCase):
         self.assertEqual(4.0, qf.qzss.zssTreeDist(back_forth, 0, 1, 3))
         self.assertEqual(0.0, qf.qzss.zssTreeDist(back_forth, 0, 0, 3))
 
+    def test_zssDistAlt(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(back_forth, [(0, 1, "a"), (1, 0, "b"), (0, 0, "c")])
+        self.assertEqual(4.0, qf.qzss.zssTreeDistAlt(back_forth, 0, 1, 3))
+        self.assertEqual(0.0, qf.qzss.zssTreeDistAlt(back_forth, 0, 0, 3))
+
+    def test_zssDistAltDeep(self):
+        G = nx.MultiDiGraph()
+        n = 8
+        for x in range(n):
+            G.add_node(x)
+        alpha = .3
+        for x in range(n):
+            for y in range(n):
+                if random.random() < alpha:
+                    qf.graphs.addEdgesWithName(G, [(x, y, "a_{}_{}".format(x,y))])
+        for t in range(5):
+            x = random.randint(0, n)
+            y = random.randint(0, n)
+            d = random.randint(0, 3)
+            self.assertEqual(qf.qzss.zssTreeDist(G, x, y, d), qf.qzss.zssTreeDistAlt(G, x, y, d))
+
     def test_zssDistIn(self):
         G = nx.MultiDiGraph()
         n = 20

@@ -78,9 +78,10 @@ def zssAllPaths(G, target, maxLen, nodeColoring=None):
         res = res.addkid(zssAllPaths(G, s, maxLen - 1, nodeColoring))
     return res
 
-def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
+def zssTreeDistAlt(G, x, y, maxLen, nodeColoring=None):
     """
         Provides the zss.simple_distance between zssAllPaths(G,x,maxLen,nodeColoring) and zssAllPaths(G,y,maxLen,nodeColoring).
+        This function is very inefficient, please use `zssTreeDist` instead.
 
         Args:
             G: a `networkx.MultiDiGraph`.
@@ -93,11 +94,12 @@ def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
     """
     return zss.simple_distance(zssAllPaths(G, x, maxLen, nodeColoring), zssAllPaths(G, y, maxLen, nodeColoring))
     
-def cachedZssDistMatrix(G, t, nodeColoring=None):
+def cachedZssDistMatrixAlt(G, t, nodeColoring=None):
     """
         Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
         computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
         of indices in the matrix) and a map from nodes to indices.
+        This function is very inefficient, please use `cachedZssDistMatrix` instead.
 
         Args:
             G: a `networkx.MultiDiGraph`.
@@ -131,6 +133,43 @@ def cachedZssDistMatrix(G, t, nodeColoring=None):
                  M[i,j] = M[j,i]
     return (M, nodes, indices)
 
+def cachedZssDistMatrix(G, t, nodeColoring=None):
+    """
+        Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
+        computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
+        of indices in the matrix) and a map from nodes to indices.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            t (int): the truncation depth.
+            nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
+
+        Returns:
+            a tuple (M, nodes, indices), where
+            - M is a `numpy.ndarray` of shape (n,n) (where n is the number of nodes)
+            - nodes is a list containing all nodes (exactly once)
+            - indices is a dict from nodes to indices.
+            The entry M[i,j] is the ZSS (tree edit) distance
+            between the trucated universal trees at `node[i]` and `node[j]`. 
+    """
+    nodes = list(G.nodes)
+    n = len(nodes)
+    d = {}
+    indices = {}
+    for i in range(n):
+        d[nodes[i]] = SpecialNode(G, nodes[i], t, nodeColoring)
+        indices[nodes[i]] = i
+    M=np.ndarray((n, n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            M[i,j] = zss.simple_distance(d[nodes[i]], d[nodes[j]])
+    for i in range(n):
+        for j in range(i + 1):
+            if i == j:
+                 M[i,j] = 0 
+            else:
+                 M[i,j] = M[j,i]
+    return (M, nodes, indices)
 
 def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
     """
@@ -236,7 +275,6 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             break
     return (res[optCl][0], M, nodes, indices)
 
-# 
 def agclust2dict(clustering, M, nodes, indices):
     """
         Given the results of agclust, produces a labelling for the nodes of G (a map from nodes to clusters).
@@ -253,6 +291,57 @@ def agclust2dict(clustering, M, nodes, indices):
     return {x: clustering.labels_[indices[x]] for x in nodes}
         
     
-    
-    
+class SpecialNode(object):
+    """
+        An alternative implementation of a zss.Node that does not need to actually unfold the paths.
+    """
+
+    def __init__(self, G, x, depth, nodeColoring):
+        """
+            Creates a node of a truncated universal total graph.
+
+            Args:
+                G: the graph (a `networkx.MultiDiGraph`)
+                x: the node (the root of the universal total graph)
+                depth (int): the depth of the view.
+                nodeColoring (dict): if present, it is a map from nodes whose values are used to color the tree.
+        """
+        self.G = G
+        self.x = x
+        self.depth = depth
+        if nodeColoring is None:
+            self.label = "x"
+        else:
+            self.label = nodeColoring[x]
+        self.children = []
+        if depth > 0:
+            for s,t,d in G.in_edges(x, data=True):
+                self.children.append(SpecialNode(G, s, depth - 1, nodeColoring))
+
+    @staticmethod
+    def get_children(node):
+        return self.children
+            
+    @staticmethod
+    def get_label(node):
+        return self.label
+
+def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
+    """
+        Provides the zss.simple_distance between zssAllPaths(G,x,maxLen,nodeColoring) and zssAllPaths(G,y,maxLen,nodeColoring).
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            target: a node of G.
+            maxLen (int): the maximum length of the paths returned.
+            nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
+
+        Returns: 
+            the ZSS (edit) distance between the trees obtained truncating at depth maxLen the universal total graphs of x and y in G.
+    """
+    return zss.simple_distance(SpecialNode(G, x, maxLen, nodeColoring), SpecialNode(G, y, maxLen, nodeColoring))
+
+
+
+     
     
