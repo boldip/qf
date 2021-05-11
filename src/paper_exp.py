@@ -12,7 +12,6 @@ import numpy as np
 import qf.cc
 import qf.graphs
 import qf.util
-import qf.matrices
 import qf.qzss
 import qf.zssexp
 import qf.morph
@@ -107,7 +106,7 @@ for linkage_type in ["single", "average", "complete"]:
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, n, nM, nodes, indices, linkage_type=linkage_type)
     bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
