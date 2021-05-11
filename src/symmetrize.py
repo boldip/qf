@@ -119,7 +119,7 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 # ZSS matrix
 logging.info("Running Agglomerative Clustering")
 for linkage_type in ["single"]:
-    M, nodes, indices = qf.qzss.cachedzssDistMatrix(G, depth)        
+    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
