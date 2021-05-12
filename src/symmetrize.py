@@ -39,21 +39,21 @@ argparser.add_argument("--depth", type=int, default=2,
                        help="Tree cut depth")
 #argparser.add_argument("--prec", type=int, default=10,
 #                       help="Precision in parameter grids")
-argparser.add_argument("--graph_skip_header", type=bool, default=True,
+argparser.add_argument("--graph_skip_header", action="store_false",
                        help="Skip headers while reading graph file")
 argparser.add_argument("--graph_separator", type=str, default="\t",
                        help="Separator used in graph file")
-argparser.add_argument("--graph_is_dense", type=bool, default=False,
+argparser.add_argument("--graph_is_dense", action="store_true",
                        help="Whether the graph is specified in the dense format")
-argparser.add_argument("--coord_skip_header", type=bool, default=True,
+argparser.add_argument("--coord_skip_header", action="store_false",
                        help="Skip headers while reading coord file")
 argparser.add_argument("--coord_separator", type=str, default=" ",
                        help="Separator used in coord file")
-argparser.add_argument("--ground_skip_header", type=bool, default=True,
+argparser.add_argument("--ground_skip_header", action="store_false",
                        help="Skip headers while reading ground truth file")
 argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
-argparser.add_argument("--katz", type=bool, default=False,
+argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
 args = argparser.parse_args() 
     
