@@ -44,10 +44,3 @@ def getFibrationRichGraph(n = 10, vmin = 1, vmax = 5, verbose=True):
         print("Result: nodes={}, arcs={}".format(G.number_of_nodes(), G.number_of_edges()))
     return G
 
-def removeEdges(G, rem = 1):
-    Gs = G.copy()
-    removed = random.sample(list(G.edges), rem)
-    Gs.remove_edges_from(removed)
-    return Gs
-
-
