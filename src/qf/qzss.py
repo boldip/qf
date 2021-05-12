@@ -3,6 +3,7 @@ import random
 import numpy as np
 import sklearn.cluster
 import zss
+import qf.graphs
 
 def allPaths(G, target, maxLen):
     """
@@ -245,7 +246,10 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             clustering.fit(M)
             silhouette = sklearn.metrics.silhouette_score(M, clustering.labels_, metric="precomputed")
             res[cl]=(clustering, silhouette)
-        except:
+        except Exception as exc:
+            print(type(exc))
+            print(exc.args)
+            print(exc)
             pass
     return (res, M, nodes, indices)
 
@@ -331,9 +335,9 @@ class SpecialNode(object):
                 chl.append(s)
             if order_label is not None:
                 d = nx.get_node_attributes(G, order_label)
-                sorted(chl, key=lambda node: d[node])
-                for child in chl:
-                    self.children.append(SpecialNode(G, child, depth - 1, nodeColoring, order_label))
+                chl = sorted(chl, key=lambda node: d[node])
+            for child in chl:
+                self.children.append(SpecialNode(G, child, depth - 1, nodeColoring, order_label))
 
     @staticmethod
     def get_children(node):
@@ -342,6 +346,13 @@ class SpecialNode(object):
     @staticmethod
     def get_label(node):
         return self.label
+
+    def recprint(self, level):
+        for i in range(level):
+            print("\t", end="")
+        print(self.x)
+        for c in self.children:
+            c.recprint(level + 1)
 
 def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
     """
@@ -366,7 +377,7 @@ def katz_preorder(G, order_label):
             G: the graph involved.
             order_label: the label to be used for the new node attribute.
     """
-    nx.set_node_attributes(G, nx.katz_centrality(qf.graphs.to_simple(G), order_label))
+    nx.set_node_attributes(G, nx.katz_centrality(qf.graphs.to_simple(G)), order_label)
 
      
     

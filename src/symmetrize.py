@@ -106,6 +106,7 @@ order_label = None
 if args.katz:
     qf.qzss.katz_preorder(G, "katz")
     order_label = "katz"
+
 # Build nodes and indices
 nodes=list(G.nodes)
 indices = {}
@@ -130,7 +131,7 @@ for linkage_type in ["single"]:
 
     # Agglomerative clustering
     c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, len(nodes), nM, nodes, indices, linkage_type=linkage_type, order_label=order_label)
-    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices, order_label=order_label)
+    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
     description="Agglomerative (linkage={})".format(linkage_type)
