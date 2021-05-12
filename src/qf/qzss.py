@@ -367,7 +367,7 @@ def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
         Returns: 
             the ZSS (edit) distance between the trees obtained truncating at depth maxLen the universal total graphs of x and y in G.
     """
-    return zss.simple_distance(SpecialNode(G, x, maxLen, nodeColoring), SpecialNode(G, y, maxLen, nodeColoring))
+    return zss.simple_distance(SpecialNode(G, x, maxLen, nodeColoring, None), SpecialNode(G, y, maxLen, nodeColoring, None))
 
 def katz_preorder(G, order_label):
     """
