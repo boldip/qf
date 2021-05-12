@@ -54,7 +54,7 @@ argparser.add_argument("--ground_skip_header", type=bool, default=True,
 argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
 argparser.add_argument("--katz", type=bool, default=False,
-                       help="Order children in trees using Katz centrality"))
+                       help="Order children in trees using Katz centrality")
 args = argparser.parse_args() 
     
 ## Read file
@@ -125,12 +125,12 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 # ZSS matrix
 logging.info("Running Agglomerative Clustering")
 for linkage_type in ["single"]:
-    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth, order_label=order_label)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, len(nodes), nM, nodes, indices, linkage_type=linkage_type)
-    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
+    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, len(nodes), nM, nodes, indices, linkage_type=linkage_type, order_label=order_label)
+    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices, order_label=order_label)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
     description="Agglomerative (linkage={})".format(linkage_type)
