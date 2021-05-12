@@ -133,7 +133,7 @@ def cachedZssDistMatrixAlt(G, t, nodeColoring=None):
                  M[i,j] = M[j,i]
     return (M, nodes, indices)
 
-def cachedZssDistMatrix(G, t, nodeColoring=None):
+def cachedZssDistMatrix(G, t, nodeColoring=None, order_label=None):
     """
         Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
         computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
@@ -143,6 +143,8 @@ def cachedZssDistMatrix(G, t, nodeColoring=None):
             G: a `networkx.MultiDiGraph`.
             t (int): the truncation depth.
             nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
+            order_label (str): if not None, every node must have that label as attribute, and the associated values are used
+                to sort children in trees.
 
         Returns:
             a tuple (M, nodes, indices), where
@@ -157,7 +159,7 @@ def cachedZssDistMatrix(G, t, nodeColoring=None):
     d = {}
     indices = {}
     for i in range(n):
-        d[nodes[i]] = SpecialNode(G, nodes[i], t, nodeColoring)
+        d[nodes[i]] = SpecialNode(G, nodes[i], t, nodeColoring, order_label)
         indices[nodes[i]] = i
     M=np.ndarray((n, n))
     for i in range(n):
@@ -171,7 +173,7 @@ def cachedZssDistMatrix(G, t, nodeColoring=None):
                  M[i,j] = M[j,i]
     return (M, nodes, indices)
 
-def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", order_label=None):
     """
         Given a graph G, it  produces an agglomerative
         clustering with `num_clusters` clusters. The result is returned in the same form as that returned by
@@ -188,6 +190,9 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
             linkage_type (str): the linkage type used to compute distances.
+            order_label (str): if not None, every node must have that label as attribute, and the associated values are used
+                to sort children in trees.
+
         Returns:
             a tuple (clustering, M, nodes, indices):
             - clustering as returned by `sklearn.cluster.AgglomerativeClustering` (labels are stored in the list `clustering.labels_`)
@@ -196,7 +201,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             - indices the dictionary from nodes to indices.
    """
     if M is None:
-        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring)
+        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring, order_label)
     clustering = sklearn.cluster.AgglomerativeClustering(
         affinity="precomputed", linkage=linkage_type, 
         n_clusters=num_clusters, compute_distances=True)
@@ -204,7 +209,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
     return (clustering, M, nodes, indices)
 
 
-def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", order_label=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -220,6 +225,8 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
             linkage_type (str): the linkage type used to compute distances.
+            order_label (str): if not None, every node must have that label as attribute, and the associated values are used
+                to sort children in trees.
 
         Returns:
             The result returned is the same as in `agclust`, but the first component is a dictionary with 
@@ -228,7 +235,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             adding the corresponding result to the dictionary.
     """
     if M is None:
-        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring)
+        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring, order_label)
     res = {}
     for cl in range(minCl, maxCl):
         try:
@@ -242,7 +249,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             pass
     return (res, M, nodes, indices)
 
-def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average"):
+def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average", order_label=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -260,6 +267,8 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
             linkage_type (str): the linkage type used to compute distances.
+            order_label (str): if not None, every node must have that label as attribute, and the associated values are used
+                to sort children in trees.
 
         Returns:
             a tuple (clustering, M, nodes, indices):
@@ -268,7 +277,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             - nodes the list of nodes used to index M
             - indices the dictionary from nodes to indices.
     """
-    res, M, nodes, indices = agclustVarcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type)
+    res, M, nodes, indices = agclustVarcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type, order_label)
     maxsilhouette=max([v[1] for v in res.values()])
     for optCl in res.keys():
         if res[optCl][1]==maxsilhouette:
@@ -296,7 +305,7 @@ class SpecialNode(object):
         An alternative implementation of a zss.Node that does not need to actually unfold the paths.
     """
 
-    def __init__(self, G, x, depth, nodeColoring):
+    def __init__(self, G, x, depth, nodeColoring, order_label):
         """
             Creates a node of a truncated universal total graph.
 
@@ -305,6 +314,8 @@ class SpecialNode(object):
                 x: the node (the root of the universal total graph)
                 depth (int): the depth of the view.
                 nodeColoring (dict): if present, it is a map from nodes whose values are used to color the tree.
+                order_label (str): if not None, every node must have that label as attribute, and the associated values are used
+                    to sort children in trees.
         """
         self.G = G
         self.x = x
@@ -315,8 +326,14 @@ class SpecialNode(object):
             self.label = nodeColoring[x]
         self.children = []
         if depth > 0:
+            chl = []
             for s,t,d in G.in_edges(x, data=True):
-                self.children.append(SpecialNode(G, s, depth - 1, nodeColoring))
+                chl.append(s)
+            if order_label is not None:
+                d = nx.get_node_attributes(G, order_label)
+                sorted(chl, key=lambda node: d[node])
+                for child in chl:
+                    self.children.append(SpecialNode(G, child, depth - 1, nodeColoring, order_label))
 
     @staticmethod
     def get_children(node):
@@ -341,7 +358,8 @@ def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
     """
     return zss.simple_distance(SpecialNode(G, x, maxLen, nodeColoring), SpecialNode(G, y, maxLen, nodeColoring))
 
-
+def katz_preorder(G):
+    nx.set_node_attributes(G, nx.katz_centrality(qf.graphs.to_simple(G), "katz"))
 
      
     
