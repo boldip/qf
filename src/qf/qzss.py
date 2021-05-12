@@ -358,8 +358,15 @@ def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
     """
     return zss.simple_distance(SpecialNode(G, x, maxLen, nodeColoring), SpecialNode(G, y, maxLen, nodeColoring))
 
-def katz_preorder(G):
-    nx.set_node_attributes(G, nx.katz_centrality(qf.graphs.to_simple(G), "katz"))
+def katz_preorder(G, order_label):
+    """
+        Compute Katz centrality on (the simple version of) G, and add its value as a node attribute with the given label.
+
+        Args:
+            G: the graph involved.
+            order_label: the label to be used for the new node attribute.
+    """
+    nx.set_node_attributes(G, nx.katz_centrality(qf.graphs.to_simple(G), order_label))
 
      
     

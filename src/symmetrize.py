@@ -53,6 +53,8 @@ argparser.add_argument("--ground_skip_header", type=bool, default=True,
                        help="Skip headers while reading ground truth file")
 argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
+argparser.add_argument("--katz", type=bool, default=False,
+                       help="Order children in trees using Katz centrality"))
 args = argparser.parse_args() 
     
 ## Read file
@@ -99,7 +101,11 @@ else:
 depth = args.depth
 results = {}
 
-
+# Compute Katz if needed
+order_label = None
+if args.katz:
+    qf.qzss.katz_preorder(G, "katz")
+    order_label = "katz"
 # Build nodes and indices
 nodes=list(G.nodes)
 indices = {}
