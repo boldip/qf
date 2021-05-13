@@ -18,6 +18,7 @@ import qf.cc
 import qf.graphs
 import qf.morph
 import qf.qzss
+import qf.qastar
 import qf.util
 import qf.zssexp
 

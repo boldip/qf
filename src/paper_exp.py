@@ -15,6 +15,7 @@ import qf.util
 import qf.qzss
 import qf.zssexp
 import qf.morph
+import qf.qastar
 import sys
 import argparse
 
@@ -94,6 +95,7 @@ if args.katz:
     order_label = "katz"
 
 # Build nodes and indices
+n = G.number_of_nodes()
 nodes=list(G.nodes)
 indices = {}
 for i in range(len(nodes)):
@@ -137,6 +139,36 @@ for linkage_type in ["single", "average", "complete"]:
     bestcexnmi = qf.util.nmi(gt, bestcex)
     description="Agglomerative exact (linkage={}) [*]".format(linkage_type)
     results[description]=(bestcexn,bestcexnmi)
+
+#Compute agglomerative clustering with A* 
+for linkage_type in ["single", "average", "complete"]:
+    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth)        
+    nM = M/sum(sum(M))
+
+    # Agglomerative clustering
+    c, _M, nodes, indices = qf.qastar.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+    bestuc = qf.qastar.agclust2dict(c, _M, nodes, indices)
+    bestucn = len(set(bestc.values()))
+    bestucnmi = qf.util.nmi(gt, bestc)
+    description="Ugglomerative (linkage={})".format(linkage_type)
+    results[description]=(bestucn,bestucnmi)
+
+    # Doing further steps
+    Bu, xiu = qf.morph.qf_build(G, bestuc, verbose=False)
+    Gup, xiup = qf.morph.repair(xiu, G, Bu, verbose=False)
+    ccup = qf.cc.cardon_crochemore(Gup)
+    ccupn =  len(set(ccup.values()))
+    ccupnmi = qf.util.nmi(gt, ccup)
+    results["Final (uggl., linkage={})"]=(ccupn,ccupnmi)
+
+    #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
+
+    c, _M, nodes, indices = qf.qastar.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type)
+    bestucex = qf.qzss.agclust2dict(c, _M, nodes, indices)
+    bestucexn = len(set(bestucex.values()))
+    bestucexnmi = qf.util.nmi(gt, bestucex)
+    description="Ugglomerative exact (linkage={}) [*]".format(linkage_type)
+    results[description]=(bestucexn,bestucexnmi)
 
 # Simple graph
 H = qf.graphs.to_simple(G)

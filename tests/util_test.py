@@ -1,7 +1,11 @@
+import networkx as nx
 import tempfile
 import unittest
 
 import qf.util
+import qf.graphs
+
+import uted.uted
 
 
 class TestUtil(unittest.TestCase):
@@ -153,5 +157,24 @@ class TestUtil(unittest.TestCase):
     
     def test_colors(self):
         self.assertEqual(10, len(qf.util.colors(10)))
+
+    def test_dfs_tree(self):
+        G = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(G, [("a", "b", "ba"), ("b", "a", "ab"), ("c", "a", "ca"), ("d", "c", "dc"), ("e", "c", "ec"), ("a", "d", "ad"), ("a", "e", "ae")])
+        n, a=qf.util.dfs_tree(G, "a", 2, 0)
+        self.assertEqual(["a", "b", "a", "c", "d", "e"], n)
+        self.assertEqual([[1,3], [2], [], [4,5], [], []], a)
+
+    def test_dfs_astar(self):
+        G = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(G, [("a", "b", "ba"), ("b", "a", "ab"), ("c", "a", "ca"), ("d", "c", "dc"), ("e", "c", "ec"), ("a", "d", "ad"), ("a", "e", "ae")])
+        n, a=qf.util.dfs_tree(G, "a", 2)
+        H = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(H, [("c", "a", "ca"), ("d", "c", "dc"), ("e", "c", "ec"), ("a", "d", "ad"), ("a", "e", "ae"), ("a", "b", "ba"), ("b", "a", "ab")])
+        np, ap=qf.util.dfs_tree(H, "a", 2)
+        self.assertEqual(["a", "c", "d", "e", "b", "a"], np)
+        self.assertEqual([[1, 4], [2, 3], [], [], [5], []], ap)
+        self.assertEqual(0.0, uted.uted.uted_astar(n, a, np, ap)[0])
+
 
 if __name__ == "__main__": unittest.main()

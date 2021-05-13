@@ -7,6 +7,7 @@ import numpy as np
 from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score
+from queue import Queue
 
 
 def indexify(m):
@@ -204,3 +205,36 @@ def colors(n):
         b = int(b) % 256 
         ret.append((r/256,g/256,b/256))  
     return ret 
+
+def dfs_tree(G, x, depth, i=0):
+    """
+        Consider the truncated universal total graph of x in G, and number its nodes in DFS (i is the root, i+1 is root's leftmost child, i+2 is its root's leftmost grandchild and so on).
+        Let k be the number of nodes of the tree. 
+        This function returns two lists:
+            - the first is a list with the k nodes visited;
+            - the second is a list of k lists, where the j-th list is the list of children of node j, in left-to-right order.
+
+        Args:
+            G: a `networkx.MultiDiGraph`.
+            x: a node of G.
+            depth: the truncation depth.
+            i: the number of the first visited node
+    """
+    if depth == 0:
+        return ([x], [[]]) 
+    nodes = [x]
+    adj = []
+    children = []
+    i += 1
+    for s,t,d in G.in_edges(x, data=True):
+        children.append(i)
+        n, a = dfs_tree(G, s, depth - 1, i)
+        nodes.extend(n)
+        adj.extend(a)
+        i += len(n)
+    res_adj = [children]
+    res_adj.extend(adj)
+    return (nodes, res_adj)
+
+
+
