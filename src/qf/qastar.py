@@ -4,7 +4,7 @@ import numpy as np
 import sklearn.cluster
 import qf.graphs
 import uted.uted
-
+import edist.tree_utils
 
 def qastarAllPaths(G, target, maxLen, nodeColoring=None):
     """
@@ -111,8 +111,15 @@ def qastarDistMatrix(G, t, nodeColoring=None):
         d[nodes[i]] = qastarAllPaths(G, nodes[i], t, nodeColoring)
         indices[nodes[i]] = i
     M=np.ndarray((n, n))
+    #c=0
+    #t=n*(n-1)/2
     for i in range(n):
         for j in range(i + 1, n):
+    #        print("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/t), flush=True)
+    #        print("Tree 1: {}".format(d[nodes[i]]))
+    #        print("Tree 2: {}".format(d[nodes[j]]))
+    #        print("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))
+    #        print("Tree 2 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[j]])))
             M[i,j] = uted.uted.uted_astar(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1])[0]
     for i in range(n):
         for j in range(i + 1):
