@@ -5,6 +5,7 @@ import sklearn.cluster
 import qf.graphs
 import uted.uted
 import edist.tree_utils
+import logging
 
 def qastarAllPaths(G, target, maxLen, nodeColoring=None):
     """
@@ -84,7 +85,7 @@ def qastarDistMatrixAlt(G, t, nodeColoring=None):
                  M[i,j] = M[j,i]
     return (M, nodes, indices)
 
-def qastarDistMatrix(G, t, nodeColoring=None):
+def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None):
     """
         Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
         computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
@@ -111,22 +112,32 @@ def qastarDistMatrix(G, t, nodeColoring=None):
         d[nodes[i]] = qastarAllPaths(G, nodes[i], t, nodeColoring)
         indices[nodes[i]] = i
     M=np.ndarray((n, n))
-    #c=0
-    #t=n*(n-1)/2
+    c=0
+    stopped=0
+    total_size=n*(n-1)/2
     for i in range(n):
         for j in range(i + 1, n):
-    #        print("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/t), flush=True)
-    #        print("Tree 1: {}".format(d[nodes[i]]))
-    #        print("Tree 2: {}".format(d[nodes[j]]))
-    #        print("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))
-    #        print("Tree 2 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[j]])))
-            M[i,j] = uted.uted.uted_astar(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1])[0]
+#            print("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size), flush=True)
+#            print("Tree 1: {}".format(d[nodes[i]]))
+#            print("Tree 2: {}".format(d[nodes[j]]))
+#            print("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))
+#            print("Tree 2 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[j]])))
+            if max_milliseconds is None:
+                M[i,j] = qf.util.utd_to(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1], max_seconds=None)
+            else:
+                M[i,j] = qf.util.utd_to(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1], max_seconds=int(max_milliseconds / (1000 * total_size)))
+                if M[i,j] < 0:
+                    stopped += 1
+                    if Msubs is not None:
+                        M[i,j] = Msubs[i,j]
+                    logging.info("uted_aster stopped, substituted with {}".format(M[i,j]))
     for i in range(n):
         for j in range(i + 1):
             if i == j:
                  M[i,j] = 0 
             else:
                  M[i,j] = M[j,i]
+    logging.info("Stopped {:.2}% of the times".format(100*stopped/total_size))
     return (M, nodes, indices)
 
 def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
@@ -200,9 +211,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             silhouette = sklearn.metrics.silhouette_score(M, clustering.labels_, metric="precomputed")
             res[cl]=(clustering, silhouette)
         except Exception as exc:
-            print(type(exc))
-            print(exc.args)
-            print(exc)
+            logging.info(type(exc), exc.args, exc)
             pass
     return (res, M, nodes, indices)
 

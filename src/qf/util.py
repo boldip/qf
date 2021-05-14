@@ -8,6 +8,9 @@ from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score
 from queue import Queue
+import threading
+import _thread as thread
+import uted.uted
 
 
 def indexify(m):
@@ -237,4 +240,19 @@ def dfs_tree(G, x, depth, i=0):
     return (nodes, res_adj)
 
 
+def quit_function():
+    thread.interrupt_main() # raises KeyboardInterrupt
+
+def utd_to(n1, a1, n2, a2, max_seconds=1, default=-1):
+    if max_seconds is None:
+        return uted.uted.uted_astar(n1, a1, n2, a2)[0]
+    timer = threading.Timer(max_seconds, quit_function)
+    timer.start()
+    try:
+        result = uted.uted.uted_astar(n1, a1, n2, a2)[0]
+    except KeyboardInterrupt:
+        result = default
+    finally:
+        timer.cancel()
+    return result
 

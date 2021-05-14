@@ -70,6 +70,24 @@ The answer is positive:
 
 What the above theorem says, essentially, is that there is a unique coarsest local in-isomorphism. And, a unique (up-to isomorphism) minimum epimorphic-fibration base. The fibration _&mu;_ is not unique, though, albeit only the arc-component can change.
 
+
+### Constructing the minimum base
+
+The last theorem can be turned into a construction, that is, into an algorithm that in fact builds the minimum base for a given graph. 
+The simplest (although not particularly effective) way to build the minimum base uses the concept of _universal total graph_ (a.k.a., _view_): given a graph _G_ and a node _x_, consider the following rooted in-tree _VIEW(G,x)_:
+
+- its nodes are the paths in _G_ ending at _x_ (by this we mean "all the paths", including the non-simple ones); a path is a finite sequence of arcs such that the target of every arc is the source of the following arc; this set is typically infinite;
+- a path _(a<sub>1</sub>,a<sub>2</sub>,...,a<sub>k</sub>)_ is a child of _(a<sub>2</sub>,...,a<sub>k</sub>)_ (the root being the empty path, that has no parent).
  
+Define now an equivalence relation _&equiv;_ on the nodes of _G_ where two nodes _x_ and _y_ are equivalent iff they have isomorphic views (i.e., if the two trees _VIEW(G,x)_ and _VIEW(G,y)_ are isomorphic.
+
+Finally, the minimum base _B_ can be defined as follows:
+
+- its nodes are the equivalence classes of _&equiv;_
+- between class _X_ and class _Y_ there are as many arcs as there are arcs from nodes of _X_ to any specific node of _Y_ (by definition, this number is independent on the way you choose that specific node).
+
+As we said, this algorithm is not especially efficient; you may even wonder that it is in fact an algorithm because it requires to decide if two (potentially infinite) trees are isomorphic. It can be proven, though, that two views are isomorphic if and only if they are isomorphic when truncated after _n_ levels (where _n_ is the number of nodes of _G_), which makes the decision algorithmically sound.
+
+There are other and more efficient ways to accomplish the same job; the best known is Cardon-Crochemore's algorithm. We shall often use _Cardon-Crochemore_ to 
 
 

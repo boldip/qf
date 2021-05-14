@@ -113,6 +113,7 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 # ZSS matrix
 for linkage_type in ["single", "average", "complete"]:
     M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+    Mzss = M
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
@@ -120,7 +121,7 @@ for linkage_type in ["single", "average", "complete"]:
     bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
-    description="Agglomerative (linkage={})".format(linkage_type)
+    description = "Agglomerative (linkage={})".format(linkage_type)
     results[description]=(bestcn,bestcnmi)
 
     # Doing further steps
@@ -129,7 +130,8 @@ for linkage_type in ["single", "average", "complete"]:
     ccp = qf.cc.cardon_crochemore(Gp)
     ccpn =  len(set(ccp.values()))
     ccpnmi = qf.util.nmi(gt, ccp)
-    results["Final (aggl., linkage={})"]=(ccpn,ccpnmi)
+    description = "Final (aggl., linkage={})".format(linkage_type)
+    results[description]=(ccpn,ccpnmi)
 
     #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
 
@@ -142,7 +144,7 @@ for linkage_type in ["single", "average", "complete"]:
 
 #Compute agglomerative clustering with A* 
 for linkage_type in ["single", "average", "complete"]:
-    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth)        
+    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=30*60*1000)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
@@ -159,7 +161,8 @@ for linkage_type in ["single", "average", "complete"]:
     ccup = qf.cc.cardon_crochemore(Gup)
     ccupn =  len(set(ccup.values()))
     ccupnmi = qf.util.nmi(gt, ccup)
-    results["Final (uggl., linkage={})"]=(ccupn,ccupnmi)
+    description = "Final (uggl., linkage={})".format(linkage_type)
+    results[description]=(ccupn,ccupnmi)
 
     #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
 
