@@ -13,10 +13,12 @@ import qf.cc
 import qf.graphs
 import qf.util
 import qf.qzss
+import qf.zssexp
 import qf.morph
 import qf.qastar
 import sys
 import argparse
+import logging
 
 if __name__ != "__main__":
 	exit()
@@ -44,8 +46,8 @@ argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
 argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
-argparser.add_argument("--minutes", type=int, default=60,
-                       help="Maximum number of minutes for the computation of the UTD matrix")
+argparser.add_argument("--minutes", type=float, default=60,
+                       help="Maximum number of minutes for the computation of the UTD matrix (can be float)")
 args = argparser.parse_args() 
     
 ## Read file
@@ -111,18 +113,19 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 
 
 #Compute agglomerative clustering on the pure ZSS matrix
-# ZSS matrix
-for linkage_type in ["single", "average", "complete"]:
-    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
-    Mzss = M
-    nM = M/sum(sum(M))
+logging.info("Starting computation of OED matrix")
+M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+nM = M/sum(sum(M))
+logging.info("Computation ended")
+Mzss = M
 
+for linkage_type in ["single", "average", "complete"]:
     # Agglomerative clustering
     c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
     bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
-    description = "Agglomerative (linkage={})".format(linkage_type)
+    description = "Agglomerative OED (linkage={})".format(linkage_type)
     results[description]=(bestcn,bestcnmi)
 
     # Doing further steps
@@ -131,7 +134,7 @@ for linkage_type in ["single", "average", "complete"]:
     ccp = qf.cc.cardon_crochemore(Gp)
     ccpn =  len(set(ccp.values()))
     ccpnmi = qf.util.nmi(gt, ccp)
-    description = "Final (aggl., linkage={})".format(linkage_type)
+    description = "Reduced aggl. OED (linkage={})".format(linkage_type)
     results[description]=(ccpn,ccpnmi)
 
     #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
@@ -140,20 +143,22 @@ for linkage_type in ["single", "average", "complete"]:
     bestcex = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcexn = len(set(bestcex.values()))
     bestcexnmi = qf.util.nmi(gt, bestcex)
-    description="Agglomerative exact (linkage={}) [*]".format(linkage_type)
+    description="Agglomerative OED exact (linkage={}) [*]".format(linkage_type)
     results[description]=(bestcexn,bestcexnmi)
+
+logging.info("Starting computation of UTD matrix")
+M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+nM = M/sum(sum(M))
+logging.info("Computation ended")
 
 #Compute agglomerative clustering with A* 
 for linkage_type in ["single", "average", "complete"]:
-    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)        
-    nM = M/sum(sum(M))
-
     # Agglomerative clustering
     c, _M, nodes, indices = qf.qastar.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
     bestuc = qf.qastar.agclust2dict(c, _M, nodes, indices)
-    bestucn = len(set(bestc.values()))
-    bestucnmi = qf.util.nmi(gt, bestc)
-    description="Ugglomerative (linkage={})".format(linkage_type)
+    bestucn = len(set(bestuc.values()))
+    bestucnmi = qf.util.nmi(gt, bestuc)
+    description="Agglomerative UED (linkage={})".format(linkage_type)
     results[description]=(bestucn,bestucnmi)
 
     # Doing further steps
@@ -162,16 +167,16 @@ for linkage_type in ["single", "average", "complete"]:
     ccup = qf.cc.cardon_crochemore(Gup)
     ccupn =  len(set(ccup.values()))
     ccupnmi = qf.util.nmi(gt, ccup)
-    description = "Final (uggl., linkage={})".format(linkage_type)
+    description = "Reduced aggl. UED (linkage={})".format(linkage_type)
     results[description]=(ccupn,ccupnmi)
 
-    #Compute agglomerative clustering on the pure ZSS matrix with exact number of clusters
+    #Compute agglomerative clustering with exact number of clusters
 
     c, _M, nodes, indices = qf.qastar.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type)
     bestucex = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestucexn = len(set(bestucex.values()))
     bestucexnmi = qf.util.nmi(gt, bestucex)
-    description="Ugglomerative exact (linkage={}) [*]".format(linkage_type)
+    description="Agglomerative UED exact (linkage={}) [*]".format(linkage_type)
     results[description]=(bestucexn,bestucexnmi)
 
 # Simple graph

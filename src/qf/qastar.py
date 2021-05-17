@@ -76,9 +76,10 @@ def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None)
     c=0
     stopped=0
     total_size=n*(n-1)/2 # Number of entries to be computed
-    for j in range(i + 1, n):
-        for i in range(n):
-            logging.debug("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size), flush=True)
+    for i in range(n):
+        for j in range(i + 1, n):
+            #if nodes[i]=="VB06" and nodes[j]=="VB07":
+            logging.debug("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size))
             logging.debug("Tree 1: {}".format(d[nodes[i]]))
             logging.debug("Tree 2: {}".format(d[nodes[j]]))
             logging.debug("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))

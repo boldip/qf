@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import random
 from collections import Counter
 
@@ -240,6 +241,7 @@ def dfs_tree(G, x, depth, i=0):
 
 class TimeoutException(Exception): pass
 
+@contextmanager
 def time_limit(seconds):
     """
         Wrapper to execute a function stopping it after the given number of seconds.
@@ -280,7 +282,7 @@ def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
         return qf.uted.uted_astar(n1, a1, n2, a2)[0]
     try:
         with time_limit(max_seconds):
-            result = qf.uted.uted_astar(n1, a1, n2, a2)[0]
+            result = qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]
     except TimeoutException:
         result = default
     return result

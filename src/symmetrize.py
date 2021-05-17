@@ -55,6 +55,8 @@ argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
 argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
+argparser.add_argument("--minutes", type=int, default=60,
+                       help="Maximum number of minutes for the computation of the UTD matrix")
 args = argparser.parse_args() 
     
 ## Read file
@@ -108,6 +110,7 @@ if args.katz:
     order_label = "katz"
 
 # Build nodes and indices
+n=G.number_of_nodes()
 nodes=list(G.nodes)
 indices = {}
 for i in range(len(nodes)):
@@ -124,32 +127,27 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 
 #Compute agglomerative clustering on the pure ZSS matrix
 # ZSS matrix
-logging.info("Running Agglomerative Clustering")
-for linkage_type in ["single"]:
-    M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth, order_label=order_label)        
-    nM = M/sum(sum(M))
-
-    # Agglomerative clustering
-    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, 2, len(nodes), nM, nodes, indices, linkage_type=linkage_type, order_label=order_label)
-    bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
-    bestcn = len(set(bestc.values()))
-    bestcnmi = qf.util.nmi(gt, bestc)
-    description="Agglomerative (linkage={})".format(linkage_type)
-    results[description]=(bestcn,bestcnmi)
-
-
-# Save graph files
-logging.info("Writing dot/png files")
-qf.graphs.save(G, args.output_basename + "-orig-cc.dot", args.output_basename + "-orig-cc.png", colors=cc)
-qf.graphs.save(G, args.output_basename + "-orig-aggl.dot", args.output_basename + "-orig-aggl.png", colors=bestc)
-qf.graphs.save(G, args.output_basename + "-orig-gt.dot", args.output_basename + "-orig-gt.png", colors=gt)
-
-
+logging.info("Running Agglomerative UED")
+linkage_type = "single"
+logging.info("Computing fallback OED matrix")
+M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+nM = M/sum(sum(M))
+Mzss = M
+logging.info("Computing UED matrix")
+M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+nM = M/sum(sum(M))
+logging.info("Clustering")
+c, _M, nodes, indices = qf.qastar.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+bestc = qf.qastar.agclust2dict(c, _M, nodes, indices)
+bestcn = len(set(bestc.values()))
+bestcnmi = qf.util.nmi(gt, bestc)
+description="Agglomerative UED (linkage={})".format(linkage_type)
+results[description]=(bestcn,bestcnmi)
 # Completion
 logging.info("Building quasi-fibration and repairing")
 B, xi = qf.morph.qf_build(G, bestc, verbose=False)
 excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=False)
-
+logging.info("Repairing graph")
 with open(args.output_basename + "-aggl-repair.txt", "w") as txt:
     txt.write("Excess / deficiency / total error: {} / {} / {}\n".format(excess, deficiency, excess + deficiency))
     txt.write("Arcs to remove or add\n\n")
@@ -157,8 +155,6 @@ with open(args.output_basename + "-aggl-repair.txt", "w") as txt:
     sys.stdout = txt
     Gp, xip = qf.morph.repair(xi, G, B, verbose=True)
     sys.stdout = original_stdout
-    
-qf.graphs.save(Gp, args.output_basename + "-repaired.dot", args.output_basename + "-repaired.png", colors=bestc)
 
 # Final minimum base
 ccp = qf.cc.cardon_crochemore(Gp)
@@ -167,20 +163,18 @@ ccpn =  len(set(ccp.values()))
 ccpnmi = qf.util.nmi(gt, ccp)
 results["Final"]=(ccpn,ccpnmi)
 
-qf.graphs.save(G, args.output_basename + "-orig-final.dot", args.output_basename + "-orig-final.png", colors=ccp)
+# Save graph files
+logging.info("Writing dot/png files")
+qf.graphs.save(G, args.output_basename + "-orig-gt.dot", args.output_basename + "-orig-gt.png", colors=gt)
+qf.graphs.save(G, args.output_basename + "-orig-cc.dot", args.output_basename + "-orig-cc.png", colors=cc)
+qf.graphs.save(G, args.output_basename + "-orig-aggl.dot", args.output_basename + "-orig-aggl.png", colors=bestc)
+qf.graphs.save(G, args.output_basename + "-orig-reduced.dot", args.output_basename + "-orig-reduced.png", colors=ccp)
+qf.graphs.save(Gp, args.output_basename + "-repaired.dot", args.output_basename + "-repaired.png", colors=ccp)
 
 # Compute and save difference
 Gdif = qf.graphs.difference(Gp, G)
-qf.graphs.save(Gdif, args.output_basename + "-orig-final-diff.dot", args.output_basename + "-orig-final-diff.png", colors=ccp, labelNodes=True, labelArcs=False)
-qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-orig-final-base.dot", args.output_basename + "-orig-final-base.png", colors=ccp, labelNodes=False, labelArcs=False)
-
-Bgt, xigt = qf.morph.qf_build(G, gt, verbose=False)
-Ggtp, xigtp = qf.morph.repair(xigt, G, Bgt, verbose=False)
-gtp = qf.cc.cardon_crochemore(Ggtp)
-Ggtphat = qf.graphs.minimum_base(Ggtp, gtp)
-Ggtdif = qf.graphs.difference(Ggtp, G)
-qf.graphs.save(Ggtdif, args.output_basename + "-orig-gt-diff.dot", args.output_basename + "-orig-gt-diff.png", colors=gt, labelNodes=True, labelArcs=False)
-qf.graphs.save(qf.graphs.to_simple(Ggtphat), args.output_basename + "-orig-gt-base.dot", args.output_basename + "-orig-gt-base.png", colors=gtp, labelNodes=False, labelArcs=False)
+qf.graphs.save(Gdif, args.output_basename + "-diff.dot", args.output_basename + "-diff.png", colors=ccp, labelNodes=True, labelArcs=False)
+qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", args.output_basename + "-base.png", colors=ccp, labelNodes=False, labelArcs=False)
 
 # Clusters
 logging.info("Writing clustering information")
@@ -188,7 +182,6 @@ with open(args.output_basename + "-clusters.tsv", "w") as txt:
     txt.write("# Every line contains: node, ground-truth cluster (=Cardon-Crochemore, if unavailable), Cardon-Crochemore cluster, Agglomerative Clustering cluster, Final cluster\n")
     for node in G.nodes:
         txt.write("{}\t{}\t{}\t{}\t{}\n".format(node, gt[node], cc[node], bestc[node], ccp[node]))
-
 
 # Comparison
 logging.info("Writing cluster comparison information")
@@ -200,15 +193,7 @@ with open(args.output_basename + "-cc-vs-gt.txt", "w") as txt:
             if gt[nodes[i]] != gt[nodes[j]] and cc[nodes[i]] == cc[nodes[j]]:
                 txt.write("{} and {} erroneously merged\n".format(nodes[i], nodes[j]))
 
-with open(args.output_basename + "-aggl-vs-gt.txt", "w") as txt:    
-    for i in range(len(indices)):
-        for j in range(i + 1, len(indices)):
-            if gt[nodes[i]] == gt[nodes[j]] and bestc[nodes[i]] != bestc[nodes[j]]:
-                txt.write("{} and {} erroneously separated\n".format(nodes[i], nodes[j]))
-            if gt[nodes[i]] != gt[nodes[j]] and bestc[nodes[i]] == bestc[nodes[j]]:
-                txt.write("{} and {} erroneously merged\n".format(nodes[i], nodes[j]))
-
-with open(args.output_basename + "-final-vs-gt.txt", "w") as txt:    
+with open(args.output_basename + "-reduced-vs-gt.txt", "w") as txt:    
     for i in range(len(indices)):
         for j in range(i + 1, len(indices)):
             if gt[nodes[i]] == gt[nodes[j]] and ccp[nodes[i]] != ccp[nodes[j]]:
