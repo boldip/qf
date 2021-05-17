@@ -45,6 +45,8 @@ argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
 argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
+argparser.add_argument("--minutes", type=int, default=60,
+                       help="Maximum number of minutes for the computation of the UTD matrix")
 args = argparser.parse_args() 
     
 ## Read file
@@ -144,7 +146,7 @@ for linkage_type in ["single", "average", "complete"]:
 
 #Compute agglomerative clustering with A* 
 for linkage_type in ["single", "average", "complete"]:
-    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=30*60*1000)        
+    M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)        
     nM = M/sum(sum(M))
 
     # Agglomerative clustering
