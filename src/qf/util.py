@@ -8,9 +8,8 @@ from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score
 from queue import Queue
-import threading
-import _thread as thread
-import uted.uted
+import signal
+import qf.uted.uted
 
 
 def indexify(m):
@@ -239,20 +238,50 @@ def dfs_tree(G, x, depth, i=0):
     res_adj.extend(adj)
     return (nodes, res_adj)
 
+class TimeoutException(Exception): pass
 
-def quit_function():
-    thread.interrupt_main() # raises KeyboardInterrupt
+def time_limit(seconds):
+    """
+        Wrapper to execute a function stopping it after the given number of seconds.
 
-def utd_to(n1, a1, n2, a2, max_seconds=1, default=-1):
-    if max_seconds is None:
-        return uted.uted.uted_astar(n1, a1, n2, a2)[0]
-    timer = threading.Timer(max_seconds, quit_function)
-    timer.start()
+        Args:
+            seconds (float): the maximum number of seconds allowed.
+
+        Raise:
+            TimeoutException: if the execution was interrupted
+    """
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
-        result = uted.uted.uted_astar(n1, a1, n2, a2)[0]
-    except KeyboardInterrupt:
-        result = default
+        yield
     finally:
-        timer.cancel()
+        signal.alarm(0)
+
+
+def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
+    """
+        A wrapper to compute the Unordered Tree edit Distance between two trees (in the node/adjacency form).
+        The computation is stopped after a given number of seconds, after which a default value is returned.
+
+        Args:
+            n1 (list): the node part of a node/adjacency representation of a tree.
+            a1 (list): the adjacency part of a node/adjacency representation of a tree.
+            n2 (list): the node part of a node/adjacency representation of a tree.
+            a2 (list): the adjacency part of a node/adjacency representation of a tree.
+            max_seconds (float): the maximum number of seconds allowed for the execution, or None if there is no timeout.
+            default: the value to be returned on timeout.
+        
+        Returns:
+            the unordered edit distance (as computed by `uted.uted.uted_astar`) between the two trees (n1,a1) and (n2,a2).
+    """
+    if max_seconds is None:
+        return qf.uted.uted_astar(n1, a1, n2, a2)[0]
+    try:
+        with time_limit(max_seconds):
+            result = qf.uted.uted_astar(n1, a1, n2, a2)[0]
+    except TimeoutException:
+        result = default
     return result
 

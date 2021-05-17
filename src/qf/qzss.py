@@ -341,11 +341,11 @@ class SpecialNode(object):
 
     @staticmethod
     def get_children(node):
-        return self.children
+        return node.children
             
     @staticmethod
     def get_label(node):
-        return self.label
+        return node.label
 
     def recprint(self, level):
         for i in range(level):

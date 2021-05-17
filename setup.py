@@ -40,7 +40,7 @@ setup(
     packages = find_packages("src", exclude = ["tests"]),
     py_modules = ["scripts"],
     python_requires=">=3.7",
-    install_requires = ["edist", "ipywidgets", "jupyter", "graphviz", "matplotlib", "networkx", "numpy", "scipy", "sklearn", "zss" ],
+    install_requires = ["edist", "ipywidgets", "jupyter", "graphviz", "matplotlib", "networkx", "numpy", "pydot", "scipy", "sklearn", "zss"],
     extras_require = {
         "dev": [],
         "test": ["coverage", "codecov"],
