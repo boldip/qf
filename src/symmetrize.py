@@ -20,7 +20,6 @@ import qf.morph
 import qf.qzss
 import qf.qastar
 import qf.util
-import qf.zssexp
 
 if __name__ != "__main__":
 	exit()
@@ -63,10 +62,10 @@ args = argparser.parse_args()
 if args.graph_filename.startswith(":"):
     logging.info("Creating synthetic graph")
     if args.ground is not None:
-        parser.error("Cannot specify ground truth for synthetic datasets")
+        argparser.error("Cannot specify ground truth for synthetic datasets")
     spl = args.graph_filename.split(":")
     if len(spl) < 3 or len(spl) > 4:
-        parser.error("Wrong filename specification {}".format(args.graph_filename))
+        argparser.error("Wrong filename specification {}".format(args.graph_filename))
     try:
         n = int(spl[1])
         if len(spl) == 3:
@@ -76,7 +75,7 @@ if args.graph_filename.startswith(":"):
             add_noise = int(spl[2])
             del_noise = int(spl[3])
     except ValueError:
-        parser.error("Wrong synthetic dataset specification {}".format(args.graph_filename))
+        argparser.error("Wrong synthetic dataset specification {}".format(args.graph_filename))
 
     dataset_name = "Synthetic"
     Gideal = qf.zssexp.getFibrationRichGraph(n)

@@ -51,6 +51,8 @@ class TestMorph(unittest.TestCase):
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, double_loop)) # Not epi on arcs
         self.assertTrue(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop)) 
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop_and_node)) # Not epi on nodes
+        # Fibration
+        self.assertFalse(qf.morph.is_fibration({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Incompatible
 
     def test_excess_deficiency(self):
         back_forth = nx.MultiDiGraph()

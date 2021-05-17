@@ -5,7 +5,7 @@ import unittest
 import qf.util
 import qf.graphs
 
-import uted.uted
+import qf.uted.uted
 
 
 class TestUtil(unittest.TestCase):
@@ -174,7 +174,7 @@ class TestUtil(unittest.TestCase):
         np, ap=qf.util.dfs_tree(H, "a", 2)
         self.assertEqual(["a", "c", "d", "e", "b", "a"], np)
         self.assertEqual([[1, 4], [2, 3], [], [], [5], []], ap)
-        self.assertEqual(0.0, uted.uted.uted_astar(n, a, np, ap)[0])
+        self.assertEqual(0.0, qf.uted.uted.uted_astar(n, a, np, ap)[0])
 
 
 if __name__ == "__main__": unittest.main()

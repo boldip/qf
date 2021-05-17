@@ -1,16 +1,30 @@
+"""
+    In this module, the following special representation of trees used in (edist)[https://gitlab.ub.uni-bielefeld.de/bpaassen/python-edit-distances].
+    Given a tree of k nodes, visit it in DFS, and assign consecutive number (DFS index) to the nodes you visit. 
+    You will have indices 0,1,...,k-1 (where 0 is the root, 1 is its left child, 2 the left child of the latter etc.).
+    The tree is represented by a pair (n,a) where:
+    
+    - n is the *node list*, i.e. the list of its k nodes (in the order of DFS index)
+    - a is the *adjacency list*, i.e. a list of k elements, where the i-th element is the list of DFS indices of children of i.
+
+    We call this pair the *node/adjancency representation of the tree*.
+    You can do just the same thing for views (of course, you may find the same node many times in the node list).
+"""
+
 import networkx as nx
 import random
 import numpy as np
 import sklearn.cluster
 import qf.graphs
-import uted.uted
+import qf.uted.uted
 import edist.tree_utils
 import logging
 
 def qastarAllPaths(G, target, maxLen, nodeColoring=None):
     """
-        Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label, unless
-        `nodeColoring` is specified (in which case the value of the map is used).
+        Builds the node/adjacency representation (n,a) of the view of `target` in `G` truncated at depth `maxLen`. Before
+        returning the pair, the elements of n are mapped as follows: if `nodeColoring` is None, they are all mapped to
+        the string "x", otherwise, they are mapped through `nodeColoring`.
 
         Args:
             G: a `networkx.MultiDiGraph`.
@@ -19,7 +33,7 @@ def qastarAllPaths(G, target, maxLen, nodeColoring=None):
             nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
 
         Returns:
-            a (n,a) dfs-representation.
+            the node/adjacency representation of the view, re-mapped as explained above.
 
     """
     n, a = qf.util.dfs_tree(G, target, maxLen)
@@ -28,81 +42,28 @@ def qastarAllPaths(G, target, maxLen, nodeColoring=None):
     else:
         return ([nodeColoring[x] for x in n], a)
 
-def qastarTreeDistAlt(G, x, y, maxLen, nodeColoring=None):
-    """
-        Provides the zss.simple_distance between zssAllPaths(G,x,maxLen,nodeColoring) and zssAllPaths(G,y,maxLen,nodeColoring).
-        This function is very inefficient, please use `zssTreeDist` instead.
-
-        Args:
-            G: a `networkx.MultiDiGraph`.
-            target: a node of G.
-            maxLen (int): the maximum length of the paths returned.
-            nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
-
-        Returns: 
-            the ZSS (edit) distance between the trees obtained truncating at depth maxLen the universal total graphs of x and y in G.
-    """
-    nx, ax = qastarAllPaths(G, x, maxLen, nodeColoring)
-    ny, ay = qastarAllPaths(G, y, maxLen, nodeColoring)
-    return uted.uted.uted_astar(nx, ax, ny, ay)[0]
-    
-def qastarDistMatrixAlt(G, t, nodeColoring=None):
-    """
-        Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
-        computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
-        of indices in the matrix) and a map from nodes to indices.
-        This function is very inefficient, please use `cachedZssDistMatrix` instead.
-
-        Args:
-            G: a `networkx.MultiDiGraph`.
-            t (int): the truncation depth.
-            nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
-
-        Returns:
-            a tuple (M, nodes, indices), where
-            - M is a `numpy.ndarray` of shape (n,n) (where n is the number of nodes)
-            - nodes is a list containing all nodes (exactly once)
-            - indices is a dict from nodes to indices.
-            The entry M[i,j] is the ZSS (tree edit) distance
-            between the trucated universal trees at `node[i]` and `node[j]`. 
-    """
-    nodes = list(G.nodes)
-    n = len(nodes)
-    d = {}
-    indices = {}
-    for i in range(n):
-        d[nodes[i]] = qastarAllPaths(G, nodes[i], t, nodeColoring)
-        indices[nodes[i]] = i
-    M=np.ndarray((n, n))
-    for i in range(n):
-        for j in range(i + 1, n):
-            M[i,j] = uted.uted.uted_astar(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1])
-    for i in range(n):
-        for j in range(i + 1):
-            if i == j:
-                 M[i,j] = 0 
-            else:
-                 M[i,j] = M[j,i]
-    return (M, nodes, indices)
 
 def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None):
     """
-        Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
-        computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
+        Given a graph G and a value t, it computes all the `qastarAllPaths(G,x,t)` trees (for all nodes x of G) and 
+        computes all-pairs matrix of `uted.uted.uted_astar` distances. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
         of indices in the matrix) and a map from nodes to indices.
 
         Args:
             G: a `networkx.MultiDiGraph`.
             t (int): the truncation depth.
+            Msubs (`numpy.ndarray`): substitute matrix (see below).
             nodeColoring (dict): if not None, it is a dictionary with nodes as keys; the values are used to label the tree nodes.
+            max_milliseconds (int): if not None, it will try to keep the overall computation required within the specified number of milliseconds;
+                if the computation of a given entry of the matrix exceeds the time-limit imposed, and `Msubs` is not None, the corresponding entry
+                of `Msubs` is used instead.
 
         Returns:
             a tuple (M, nodes, indices), where
             - M is a `numpy.ndarray` of shape (n,n) (where n is the number of nodes)
             - nodes is a list containing all nodes (exactly once)
-            - indices is a dict from nodes to indices.
-            The entry M[i,j] is the ZSS (tree edit) distance
-            between the trucated universal trees at `node[i]` and `node[j]`. 
+           - indices is a dict from nodes to indices.
+            The entry M[i,j] is the uted (unordered tree edit) distance between the trucated universal trees at `node[i]` and `node[j]`. 
     """
     nodes = list(G.nodes)
     n = len(nodes)
@@ -114,18 +75,18 @@ def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None)
     M=np.ndarray((n, n))
     c=0
     stopped=0
-    total_size=n*(n-1)/2
-    for i in range(n):
-        for j in range(i + 1, n):
-#            print("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size), flush=True)
-#            print("Tree 1: {}".format(d[nodes[i]]))
-#            print("Tree 2: {}".format(d[nodes[j]]))
-#            print("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))
-#            print("Tree 2 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[j]])))
+    total_size=n*(n-1)/2 # Number of entries to be computed
+    for j in range(i + 1, n):
+        for i in range(n):
+            logging.debug("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size), flush=True)
+            logging.debug("Tree 1: {}".format(d[nodes[i]]))
+            logging.debug("Tree 2: {}".format(d[nodes[j]]))
+            logging.debug("Tree 1 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[i]])))
+            logging.debug("Tree 2 (string): {}".format(edist.tree_utils.tree_to_string(*d[nodes[j]])))
             if max_milliseconds is None:
                 M[i,j] = qf.util.utd_to(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1], max_seconds=None)
             else:
-                M[i,j] = qf.util.utd_to(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1], max_seconds=int(max_milliseconds / (1000 * total_size)))
+                M[i,j] = qf.util.utd_to(d[nodes[i]][0], d[nodes[i]][1], d[nodes[j]][0], d[nodes[j]][1], max_seconds=max_milliseconds / (1000 * total_size))
                 if M[i,j] < 0:
                     stopped += 1
                     if Msubs is not None:
@@ -137,7 +98,7 @@ def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None)
                  M[i,j] = 0 
             else:
                  M[i,j] = M[j,i]
-    logging.info("Stopped {:.2}% of the times".format(100*stopped/total_size))
+    logging.info("Stopped {:.2f}% of the times".format(100*stopped/total_size))
     return (M, nodes, indices)
 
 def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
@@ -145,14 +106,14 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
         Given a graph G, it  produces an agglomerative
         clustering with `num_clusters` clusters. The result is returned in the same form as that returned by
         `sklearn.cluster.AgglomerativeClustering`. It also returns the distance matrix used (which is M or
-        the one obtained computing all zss distances for trees of height t), the 
+        the one obtained computing all unordered edit distances distances for trees of height t), the 
         list of nodes (in the order of indices in the matrix) and a map from nodes to indices.
 
         Args:
             G: a `networkx.MultiDiGraph`.
             t (int): the truncation depth (used only if M is not None).
             num_clusters (int): the number of clusters to be produced.
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -185,7 +146,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -228,7 +189,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).

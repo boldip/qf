@@ -5,6 +5,7 @@ import unittest
 import networkx as nx
 import networkx.linalg.graphmatrix as nxg
 import qf.graphs
+import graphviz 
 
 
 class TestGraphs(unittest.TestCase):
@@ -130,6 +131,7 @@ class TestGraphs(unittest.TestCase):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
+                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         H = qf.graphs.to_simple(G)
         self.assertEqual(set(H.nodes()), set(G.nodes()))
@@ -163,6 +165,13 @@ class TestGraphs(unittest.TestCase):
                 th = H.number_of_edges(x, y)
                 td = D.number_of_edges(x, y)
                 self.assertEqual(abs(tg - th), td)
+
+    def test_save(self):
+        G = nx.MultiDiGraph()
+        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
+        dotf, pngf = qf.graphs.save(G)
+        Gread = graphviz.Digraph(filename=dotf)
+        print(Gread)
 
 
 if __name__ == "__main__": unittest.main()
