@@ -10,7 +10,7 @@ Read the [full documentation](docs/build/html/index.html) for more information.
 
 - [Installation](docs/install.md)
 - [Mathematical](docs/maths.md) background
-- [Jupyter Notebook Tutorial](docs/tutorial.ipynb)
+- [Jupyter Notebook Tutorial](docs/tutorial.ipynb) (see also the Installation section)
 - [Scripts](docs/scripts.md)
 
 ### References

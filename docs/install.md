@@ -56,3 +56,19 @@ To check that everything works, move to the `src` directory and try to execute a
 $ cd src
 $ ./paper_exp.py :20:5 --minutes 1 --depth 2
 ```
+
+### Installing a kernel to use jupyter
+
+If you want to use jupyter with all the dependencies required by the library, you way connect the environment to a kernel
+
+```
+$ python -m ipykernel install --user --display-name qf --name qf
+```
+
+Now, to try out this kernel, cd to the src directory (if you are not already there) and
+start the tutorial:
+
+```
+$ cd src
+$ jupyter notebook tutorial.ipynb
+```
