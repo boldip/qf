@@ -17,8 +17,8 @@ from sklearn.cluster import DBSCAN, KMeans
 import qf.cc
 import qf.graphs
 import qf.morph
-import qf.qzss
 import qf.qastar
+import qf.qzss
 import qf.util
 
 if __name__ != "__main__":

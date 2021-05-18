@@ -1,9 +1,12 @@
-import networkx as nx
 import random
+
+import networkx as nx
 import numpy as np
 import sklearn.cluster
 import zss
+
 import qf.graphs
+
 
 def allPaths(G, target, maxLen):
     """

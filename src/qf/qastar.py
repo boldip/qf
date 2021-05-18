@@ -11,14 +11,17 @@
     You can do just the same thing for views (of course, you may find the same node many times in the node list).
 """
 
-import networkx as nx
+import logging
 import random
+
+import edist.tree_utils
+import networkx as nx
 import numpy as np
 import sklearn.cluster
+
 import qf.graphs
 import qf.uted.uted
-import edist.tree_utils
-import logging
+
 
 def qastarAllPaths(G, target, maxLen, nodeColoring=None):
     """
@@ -177,7 +180,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             pass
     return (res, M, nodes, indices)
 
-def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average"):
+def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="singles"):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).

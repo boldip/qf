@@ -1,6 +1,8 @@
-from contextlib import contextmanager
 import random
+import signal
 from collections import Counter
+from contextlib import contextmanager
+from queue import Queue
 
 import matplotlib as mpl
 import networkx as nx
@@ -8,8 +10,7 @@ import numpy as np
 from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import adjusted_mutual_info_score
-from queue import Queue
-import signal
+
 import qf.uted.uted
 
 
@@ -279,7 +280,7 @@ def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
             the unordered edit distance (as computed by `uted.uted.uted_astar`) between the two trees (n1,a1) and (n2,a2).
     """
     if max_seconds is None:
-        return qf.uted.uted_astar(n1, a1, n2, a2)[0]
+        return qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]
     try:
         with time_limit(max_seconds):
             result = qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]

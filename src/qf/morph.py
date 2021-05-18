@@ -6,23 +6,22 @@
 """
 
 
+import logging
 import random
 import statistics
+import sys
 from collections import Counter
 
-import logging
 import matplotlib as mpl
 import networkx as nx
 import numpy as np
 from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
-import sys
 
 import qf.cc
 import qf.graphs
-import qf.util
 import qf.qzss
-
+import qf.util
 
 
 def source(G, a):
