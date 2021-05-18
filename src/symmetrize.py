@@ -133,7 +133,7 @@ logging.info("Computing fallback OED matrix")
 M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
 nM = M/sum(sum(M))
 Mzss = M
-logging.info("Computing UED matrix")
+logging.info("Computing UED matrix; may take long (up to {} minutes)".format(args.minutes))
 M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
 nM = M/sum(sum(M))
 logging.info("Clustering")
@@ -147,14 +147,9 @@ results[description]=(bestcn,bestcnmi)
 logging.info("Building quasi-fibration and repairing")
 B, xi = qf.morph.qf_build(G, bestc, verbose=False)
 excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=False)
+logging.info("Excess / deficiency / total error: {} / {} / {}".format(excess, deficiency, excess + deficiency))
 logging.info("Repairing graph")
-with open(args.output_basename + "-aggl-repair.txt", "w") as txt:
-    txt.write("Excess / deficiency / total error: {} / {} / {}\n".format(excess, deficiency, excess + deficiency))
-    txt.write("Arcs to remove or add\n\n")
-    original_stdout = sys.stdout
-    sys.stdout = txt
-    Gp, xip = qf.morph.repair(xi, G, B, verbose=True)
-    sys.stdout = original_stdout
+Gp, xip = qf.morph.repair(xi, G, B, verbose=True)
 
 # Final minimum base
 ccp = qf.cc.cardon_crochemore(Gp)
@@ -179,7 +174,7 @@ qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", a
 # Clusters
 logging.info("Writing clustering information")
 with open(args.output_basename + "-clusters.tsv", "w") as txt:
-    txt.write("# Every line contains: node, ground-truth cluster (=Cardon-Crochemore, if unavailable), Cardon-Crochemore cluster, Agglomerative Clustering cluster, Final cluster\n")
+    txt.write("# Every line contains: node, ground-truth cluster (=Cardon-Crochemore, if unavailable), Cardon-Crochemore cluster, Agglomerative Clustering cluster, Reduced aggl. cluster\n")
     for node in G.nodes:
         txt.write("{}\t{}\t{}\t{}\t{}\n".format(node, gt[node], cc[node], bestc[node], ccp[node]))
 
@@ -211,3 +206,22 @@ with open(args.output_basename + "-data.txt", "w") as txt:
     sorted_keys = sorted(results.keys(), key=lambda x: results[x][1], reverse=True)  
     for k in sorted_keys:
         txt.write("{:40}\t{:.5}\t\t{:2}\n".format(k, results[k][1], results[k][0]))
+
+with open(args.output_basename + "-README.txt", "w") as txt:
+    txt.write("TEXT FILES\n")
+    txt.write(" - {}-README.txt: this file\n".format(args.output_basename))
+    txt.write(" - {}-data.txt: general report\n".format(args.output_basename))
+    txt.write(" - {}-cc-vs-gt.txt: symmetric difference between the arcs of Cardon-Crochemore and those required by the Ground truth\n".format(args.output_basename))
+    txt.write(" - {}-reduced-vs-gt.txt: symmetric difference between the arcs of the reduced aggl. UED and those required by the Ground truth\n".format(args.output_basename))
+    txt.write(" - {}-clusters.tsv: clusters according to gt/cc/aggl/reduced\n".format(args.output_basename))    
+    txt.write("\n")
+    txt.write("GRAPHS (in .dot and .png format)\n")
+    txt.write(" - {}-orig-<XXX>.<EXT>: original graph, with different colours depending on <XXX> (<EXT> is dot or png)\n".format(args.output_basename))
+    txt.write("                  gt: Ground truth clustering\n".format(args.output_basename))
+    txt.write("                  cc: Cardon-Crochemore clustering\n".format(args.output_basename))
+    txt.write("                  aggl: Agglomerative UED\n".format(args.output_basename))
+    txt.write("                  reduced: Reduced aggl. UED\n".format(args.output_basename))
+    txt.write(" - {}-repaired.<EXT>: repaired graph (reduced aggl. UED clustering)\n".format(args.output_basename))
+    txt.write(" - {}-diff.<EXT>: difference between original and repaired graph (reduced aggl. UED clustering)\n".format(args.output_basename))
+    txt.write(" - {}-base.<EXT>: minimum base of repaired graph, as a simple graph (reduced aggl. UED clustering)\n".format(args.output_basename))
+    
