@@ -20,14 +20,6 @@ qf.graphs module
    :undoc-members:
    :show-inheritance:
 
-qf.matrices module
-------------------
-
-.. automodule:: qf.matrices
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 qf.morph module
 ---------------
 
@@ -36,10 +28,10 @@ qf.morph module
    :undoc-members:
    :show-inheritance:
 
-qf.util module
---------------
+qf.qastar module
+----------------
 
-.. automodule:: qf.util
+.. automodule:: qf.qastar
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,6 +40,14 @@ qf.qzss module
 --------------
 
 .. automodule:: qf.qzss
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+qf.util module
+--------------
+
+.. automodule:: qf.util
    :members:
    :undoc-members:
    :show-inheritance:

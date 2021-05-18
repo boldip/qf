@@ -215,8 +215,9 @@ def dfs_tree(G, x, depth, i=0):
         Consider the truncated universal total graph of x in G, and number its nodes in DFS (i is the root, i+1 is root's leftmost child, i+2 is its root's leftmost grandchild and so on).
         Let k be the number of nodes of the tree. 
         This function returns two lists:
-            - the first is a list with the k nodes visited;
-            - the second is a list of k lists, where the j-th list is the list of children of node j, in left-to-right order.
+            
+        - the first is a list with the k nodes visited;
+        - the second is a list of k lists, where the j-th list is the list of children of node j, in left-to-right order.
 
         Args:
             G: a `networkx.MultiDiGraph`.

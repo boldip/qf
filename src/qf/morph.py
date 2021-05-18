@@ -288,6 +288,7 @@ def repair(f, G, B, seed=0, verbose=False):
         This is the implementation of GraphRepair. Given a morphism f: G->B with excess x and deficiency d,
         it will build a new compatible graph G' (i.e., with the same nodes as G and such that the common arcs, if any, have the same source
         and target as in G) and a new morphism f': G'->B such that: 
+
         - the symmetric difference between the arcs of G and the arcs of G' has cardinality x+d
         - f is defined in the same way as f' on all nodes and on common arcs
         - f' is a fibration.
@@ -339,6 +340,7 @@ def qf_build(G, c, verbose=False):
     """
         This is the implementation of QFBuild. Given an equivalence relation c on the nodes of G (represented as a dict: the keys are nodes and two
         nodes are equivalent iff they have the same value), build a graph B and a morphism f: G->B with the following properties:
+        
         - the node fibres of f (i.e., counterimages of nodes) are the equivalence classes of c
         - there is no other f': G->B' with smaller excess+deficiency.
 

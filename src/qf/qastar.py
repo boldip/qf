@@ -65,7 +65,7 @@ def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None)
             a tuple (M, nodes, indices), where
             - M is a `numpy.ndarray` of shape (n,n) (where n is the number of nodes)
             - nodes is a list containing all nodes (exactly once)
-           - indices is a dict from nodes to indices.
+            - indices is a dict from nodes to indices.
             The entry M[i,j] is the uted (unordered tree edit) distance between the trucated universal trees at `node[i]` and `node[j]`. 
     """
     nodes = list(G.nodes)
