@@ -322,7 +322,7 @@ def repair(f, G, B, seed=0, verbose=False):
             if len(ts) == 0:
                 a_to_add = new_arc_label(Gp)
                 src = random.sample([s for s in G.nodes if f[s]==source(B,a)],1)[0]
-                qf.graphs.addEdgesWithName(Gp,[(src, x, a_to_add)])
+                qf.graphs.add_edges_with_name(Gp,[(src, x, a_to_add)])
                 if verbose:
                     print("Adding arc {}: {} -> {} (mapped to {})".format(a_to_add, src, x, a))
                 fp[a_to_add] = a
@@ -379,7 +379,7 @@ def qf_build(G, c, verbose=False):
             arc_label = []
             for i in range(k):
                 arc_label.append("{}_{}_{}".format(source_klass, target_klass, i))
-                qf.graphs.addEdgesWithName(B, [
+                qf.graphs.add_edges_with_name(B, [
                     (source_klass, target_klass, 
                      arc_label[i]
                     )

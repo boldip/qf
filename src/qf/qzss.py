@@ -8,7 +8,7 @@ import zss
 import qf.graphs
 
 
-def allPaths(G, target, maxLen):
+def all_paths(G, target, maxLen):
     """
         Returns an iterator for all paths in G of length <=maxLen with given target. Any such path will be returned
         as a list [x_1,k_1,...,x_n,k_n,x_{n+1}] where x_{n+1}=target, 0<=n<=maxLen, (x_i,x_{i+1}) is
@@ -28,13 +28,13 @@ def allPaths(G, target, maxLen):
     """
     if maxLen > 0:
         for s,t,d in G.in_edges(target, data=True):
-            for p in allPaths(G, s, maxLen - 1):
+            for p in all_paths(G, s, maxLen - 1):
                 yield p + [d["label"], target]
     yield [target]
 
-def inTree(G, target, maxLen):
+def in_tree(G, target, maxLen):
     """
-        Returns a (simple) multidigraph whose nodes are the paths as returned by allPaths(G, target, maxLen), 
+        Returns a (simple) multidigraph whose nodes are the paths as returned by all_paths(G, target, maxLen), 
         and with an arc from [x_1,k_1,...,x_n,k_n,x_{n+1}] to [x_2,k_2,...,x_n,k_n,x_{n+1}] for all n>0.
 
         Args:
@@ -49,15 +49,15 @@ def inTree(G, target, maxLen):
     if maxLen == 0:
         Gres.add_node(str([target]))
         return Gres
-    for p in allPaths(G, target, maxLen):
+    for p in all_paths(G, target, maxLen):
         if len(p)>1 and not Gres.has_edge(str(p), str(p[2:])):
             Gres.add_edge(str(p), str(p[2:]))
     return Gres
 
 
-def zssAllPaths(G, target, maxLen, nodeColoring=None):
+def zss_all_paths(G, target, maxLen, nodeColoring=None):
     """
-        Same as allPaths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label, unless
+        Same as all_paths, but it returns a zss.Node instead (the root of the tree). All nodes have the same label, unless
         `nodeColoring` is specified (in which case the value of the map is used).
 
         Args:
@@ -79,13 +79,13 @@ def zssAllPaths(G, target, maxLen, nodeColoring=None):
         return node  
     res = node
     for s,t,k in G.in_edges(target, keys=True):
-        res = res.addkid(zssAllPaths(G, s, maxLen - 1, nodeColoring))
+        res = res.addkid(zss_all_paths(G, s, maxLen - 1, nodeColoring))
     return res
 
-def zssTreeDistAlt(G, x, y, maxLen, nodeColoring=None):
+def zss_tree_dist_alt(G, x, y, maxLen, nodeColoring=None):
     """
-        Provides the zss.simple_distance between zssAllPaths(G,x,maxLen,nodeColoring) and zssAllPaths(G,y,maxLen,nodeColoring).
-        This function is very inefficient, please use `zssTreeDist` instead.
+        Provides the zss.simple_distance between zss_all_paths(G,x,maxLen,nodeColoring) and zss_all_paths(G,y,maxLen,nodeColoring).
+        This function is very inefficient, please use `zss_tree_dist` instead.
 
         Args:
             G: a `networkx.MultiDiGraph`.
@@ -96,14 +96,14 @@ def zssTreeDistAlt(G, x, y, maxLen, nodeColoring=None):
         Returns: 
             the ZSS (edit) distance between the trees obtained truncating at depth maxLen the universal total graphs of x and y in G.
     """
-    return zss.simple_distance(zssAllPaths(G, x, maxLen, nodeColoring), zssAllPaths(G, y, maxLen, nodeColoring))
+    return zss.simple_distance(zss_all_paths(G, x, maxLen, nodeColoring), zss_all_paths(G, y, maxLen, nodeColoring))
     
-def cachedZssDistMatrixAlt(G, t, nodeColoring=None):
+def cached_zss_dist_matrix_alt(G, t, nodeColoring=None):
     """
-        Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
+        Given a graph G and a value t, it computes all the zss_all_paths(G,x,t) trees (for all nodes x of G) and 
         computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
         of indices in the matrix) and a map from nodes to indices.
-        This function is very inefficient, please use `cachedZssDistMatrix` instead.
+        This function is very inefficient, please use `cached_zss_dist_matrix` instead.
 
         Args:
             G: a `networkx.MultiDiGraph`.
@@ -123,7 +123,7 @@ def cachedZssDistMatrixAlt(G, t, nodeColoring=None):
     d = {}
     indices = {}
     for i in range(n):
-        d[nodes[i]] = zssAllPaths(G, nodes[i], t, nodeColoring)
+        d[nodes[i]] = zss_all_paths(G, nodes[i], t, nodeColoring)
         indices[nodes[i]] = i
     M=np.ndarray((n, n))
     for i in range(n):
@@ -137,9 +137,9 @@ def cachedZssDistMatrixAlt(G, t, nodeColoring=None):
                  M[i,j] = M[j,i]
     return (M, nodes, indices)
 
-def cachedZssDistMatrix(G, t, nodeColoring=None, order_label=None):
+def cached_zss_dist_matrix(G, t, nodeColoring=None, order_label=None):
     """
-        Given a graph G and a value t, it computes all the zssAllPaths(G,x,t) trees (for all nodes x of G) and 
+        Given a graph G and a value t, it computes all the zss_all_paths(G,x,t) trees (for all nodes x of G) and 
         computes all-pairs matrix. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
         of indices in the matrix) and a map from nodes to indices.
 
@@ -189,7 +189,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             G: a `networkx.MultiDiGraph`.
             t (int): the truncation depth (used only if M is not None).
             num_clusters (int): the number of clusters to be produced.
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `cached_zss_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -205,7 +205,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             - indices the dictionary from nodes to indices.
    """
     if M is None:
-        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring, order_label)
+        M, nodes, indices = cached_zss_dist_matrix(G, t, nodeColoring, order_label)
     clustering = sklearn.cluster.AgglomerativeClustering(
         affinity="precomputed", linkage=linkage_type, 
         n_clusters=num_clusters, compute_distances=True)
@@ -213,7 +213,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
     return (clustering, M, nodes, indices)
 
 
-def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", order_label=None):
+def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", order_label=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -224,7 +224,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `cached_zss_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -239,7 +239,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             adding the corresponding result to the dictionary.
     """
     if M is None:
-        M, nodes, indices = cachedZssDistMatrix(G, t, nodeColoring, order_label)
+        M, nodes, indices = cached_zss_dist_matrix(G, t, nodeColoring, order_label)
     res = {}
     for cl in range(minCl, maxCl):
         try:
@@ -256,7 +256,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             pass
     return (res, M, nodes, indices)
 
-def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average", order_label=None):
+def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="average", order_label=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -269,7 +269,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `cachedZssDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `cached_zss_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -284,7 +284,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             - nodes the list of nodes used to index M
             - indices the dictionary from nodes to indices.
     """
-    res, M, nodes, indices = agclustVarcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type, order_label)
+    res, M, nodes, indices = agclust_varcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type, order_label)
     maxsilhouette=max([v[1] for v in res.values()])
     for optCl in res.keys():
         if res[optCl][1]==maxsilhouette:
@@ -357,9 +357,9 @@ class SpecialNode(object):
         for c in self.children:
             c.recprint(level + 1)
 
-def zssTreeDist(G, x, y, maxLen, nodeColoring=None):
+def zss_tree_dist(G, x, y, maxLen, nodeColoring=None):
     """
-        Provides the zss.simple_distance between zssAllPaths(G,x,maxLen,nodeColoring) and zssAllPaths(G,y,maxLen,nodeColoring).
+        Provides the zss.simple_distance between zss_all_paths(G,x,maxLen,nodeColoring) and zss_all_paths(G,y,maxLen,nodeColoring).
 
         Args:
             G: a `networkx.MultiDiGraph`.

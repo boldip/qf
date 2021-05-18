@@ -23,7 +23,7 @@ import qf.graphs
 import qf.uted.uted
 
 
-def qastarAllPaths(G, target, maxLen, nodeColoring=None):
+def qastar_all_paths(G, target, maxLen, nodeColoring=None):
     """
         Builds the node/adjacency representation (n,a) of the view of `target` in `G` truncated at depth `maxLen`. Before
         returning the pair, the elements of n are mapped as follows: if `nodeColoring` is None, they are all mapped to
@@ -46,9 +46,9 @@ def qastarAllPaths(G, target, maxLen, nodeColoring=None):
         return ([nodeColoring[x] for x in n], a)
 
 
-def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None):
+def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None):
     """
-        Given a graph G and a value t, it computes all the `qastarAllPaths(G,x,t)` trees (for all nodes x of G) and 
+        Given a graph G and a value t, it computes all the `qastar_all_paths(G,x,t)` trees (for all nodes x of G) and 
         computes all-pairs matrix of `uted.uted.uted_astar` distances. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
         of indices in the matrix) and a map from nodes to indices.
 
@@ -73,7 +73,7 @@ def qastarDistMatrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None)
     d = {}
     indices = {}
     for i in range(n):
-        d[nodes[i]] = qastarAllPaths(G, nodes[i], t, nodeColoring)
+        d[nodes[i]] = qastar_all_paths(G, nodes[i], t, nodeColoring)
         indices[nodes[i]] = i
     M=np.ndarray((n, n))
     c=0
@@ -117,7 +117,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             G: a `networkx.MultiDiGraph`.
             t (int): the truncation depth (used only if M is not None).
             num_clusters (int): the number of clusters to be produced.
-            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastar_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -131,7 +131,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             - indices the dictionary from nodes to indices.
    """
     if M is None:
-        M, nodes, indices = qastarDistMatrix(G, t, nodeColoring)
+        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring)
     clustering = sklearn.cluster.AgglomerativeClustering(
         affinity="precomputed", linkage=linkage_type, 
         n_clusters=num_clusters, compute_distances=True)
@@ -139,7 +139,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
     return (clustering, M, nodes, indices)
 
 
-def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -150,7 +150,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastar_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -165,7 +165,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             adding the corresponding result to the dictionary.
     """
     if M is None:
-        M, nodes, indices = qastarDistMatrix(G, t, nodeColoring)
+        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring)
     res = {}
     for cl in range(minCl, maxCl):
         try:
@@ -180,7 +180,7 @@ def agclustVarcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             pass
     return (res, M, nodes, indices)
 
-def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="singles"):
+def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -193,7 +193,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             t (int): the truncation depth (used only if M is not None).
             minCl (int): the minimum number of clusters to be produced (inclusive).
             maxCl (int): the maximum number of clusters to be produced (exclusive).
-            M (`numpy.ndarray`): the distance matrix (if None, `qastarDistMatrix(G, t, nodeColoring)` is used).
+            M (`numpy.ndarray`): the distance matrix (if None, `qastar_dist_matrix(G, t, nodeColoring)` is used).
             nodes (list): the list of nodes (used to index M); it must be None exactly when M is None.
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
@@ -206,7 +206,7 @@ def agclustOptcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColor
             - nodes the list of nodes used to index M
             - indices the dictionary from nodes to indices.
     """
-    res, M, nodes, indices = agclustVarcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type)
+    res, M, nodes, indices = agclust_varcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type)
     maxsilhouette=max([v[1] for v in res.values()])
     for optCl in res.keys():
         if res[optCl][1]==maxsilhouette:

@@ -12,7 +12,7 @@ class TestGraphs(unittest.TestCase):
 
     def test_add_edges_with_names(self):
         G = nx.MultiDiGraph()
-        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
+        qf.graphs.add_edges_with_name(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
         self.assertEqual(5, G.number_of_nodes())
         self.assertEqual(6, G.number_of_edges())
         self.assertTrue(G.has_edge(0, 1))
@@ -23,10 +23,10 @@ class TestGraphs(unittest.TestCase):
 
     def test_remove_edges_with_names(self):
         G = nx.MultiDiGraph()
-        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
+        qf.graphs.add_edges_with_name(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
         self.assertEqual(5, G.number_of_nodes())
         self.assertEqual(6, G.number_of_edges())
-        qf.graphs.removeEdgesWithNames(G, ["a", "e"])
+        qf.graphs.remove_edges_with_name(G, ["a", "e"])
         self.assertEqual(5, G.number_of_nodes())
         self.assertEqual(4, G.number_of_edges())
         self.assertFalse(G.has_edge(0, 1))
@@ -37,7 +37,7 @@ class TestGraphs(unittest.TestCase):
 
     def test_lift(self):
         G = nx.MultiDiGraph()
-        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (2, 0, "d1"), (2, 0, "d2")])
+        qf.graphs.add_edges_with_name(G, [(0, 1, "a"), (1, 2, "b"), (2, 0, "d1"), (2, 0, "d2")])
         H = qf.graphs.lift(G, {0: [0], 1: [0], 2: [6, 7]})
         self.assertEqual(4, H.number_of_nodes())
         self.assertEqual(5, H.number_of_edges())
@@ -59,26 +59,26 @@ class TestGraphs(unittest.TestCase):
         for x in range(n1):
             s = random.sample(range(n1), k1)
             for y in s:
-                qf.graphs.addEdgesWithName(G, [("a" + str(y), "a" + str(x), "arcaa_" + str(y) + "_" + str(x) + "_" + str(count))])
+                qf.graphs.add_edges_with_name(G, [("a" + str(y), "a" + str(x), "arcaa_" + str(y) + "_" + str(x) + "_" + str(count))])
                 count += 1
         # n2 nodes have k2+2 incoming arcs (k2 from the same group, 2 from the other)
         G.add_nodes_from(["b" +  str(x) for x in range(n2)])
         for x in range(n2):
             s = random.sample(range(n2), k2)
             for y in s:
-                qf.graphs.addEdgesWithName(G, [("b" + str(y), "b" + str(x), "arcbb_" + str(y) + "_" + str(x) + "_" + str(count))])
+                qf.graphs.add_edges_with_name(G, [("b" + str(y), "b" + str(x), "arcbb_" + str(y) + "_" + str(x) + "_" + str(count))])
                 count += 1
         # 
         for x in range(n1):
             ss = random.sample(range(n2), 1)
-            qf.graphs.addEdgesWithName(G, [("b" + str(ss[0]), "a" + str(x), "arcba_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
+            qf.graphs.add_edges_with_name(G, [("b" + str(ss[0]), "a" + str(x), "arcba_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
             count += 1
         # 
         for x in range(n2):
             ss = random.sample(range(n1), 2)
-            qf.graphs.addEdgesWithName(G, [("a" + str(ss[0]), "b" + str(x), "arcab_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
+            qf.graphs.add_edges_with_name(G, [("a" + str(ss[0]), "b" + str(x), "arcab_" + str(ss[0]) + "_" + str(x) + "_" + str(count))])
             count += 1
-            qf.graphs.addEdgesWithName(G, [("a" + str(ss[1]), "b" + str(x), "arcab_" + str(ss[1]) + "_" + str(x) + "_" + str(count))])
+            qf.graphs.add_edges_with_name(G, [("a" + str(ss[1]), "b" + str(x), "arcab_" + str(ss[1]) + "_" + str(x) + "_" + str(count))])
             count += 1
         # Now compute the minimum base
         B = qf.graphs.minimum_base(G, qf.cc.cardon_crochemore(G))
@@ -102,7 +102,7 @@ class TestGraphs(unittest.TestCase):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
-                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                qf.graphs.add_edges_with_name(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         x1 = random.randrange(0, n//5)
         x2 = random.randrange(0, n//5)
@@ -131,7 +131,7 @@ class TestGraphs(unittest.TestCase):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
-                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                qf.graphs.add_edges_with_name(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         H = qf.graphs.to_simple(G)
         self.assertEqual(set(H.nodes()), set(G.nodes()))
@@ -150,13 +150,13 @@ class TestGraphs(unittest.TestCase):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
-                qf.graphs.addEdgesWithName(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                qf.graphs.add_edges_with_name(G, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         for x in range(n):
             k = random.randrange(0, n//2)
             out = random.sample(range(n), k)
             for y in out:
-                qf.graphs.addEdgesWithName(H, [("a" + str(x), "a" + str(y), "c" + str(count))])
+                qf.graphs.add_edges_with_name(H, [("a" + str(x), "a" + str(y), "c" + str(count))])
                 count += 1
         D = qf.graphs.difference(G, H)
         for x in range(n):
@@ -168,7 +168,7 @@ class TestGraphs(unittest.TestCase):
 
     def test_save(self):
         G = nx.MultiDiGraph()
-        qf.graphs.addEdgesWithName(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
+        qf.graphs.add_edges_with_name(G, [(0, 1, "a"), (1, 2, "b"), (1, 3, "c"), (1, 4, "d"), (3, 0, "e"), (4, 0, "f")])
         dotf, pngf = qf.graphs.save(G)
         Gread = graphviz.Digraph(filename=dotf)
         print(Gread)

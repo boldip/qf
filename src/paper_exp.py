@@ -71,7 +71,7 @@ if args.graph_filename.startswith(":"):
         argparser.error("Wrong synthetic dataset specification {}".format(args.graph_filename))
 
     dataset_name = "Synthetic"
-    Gideal = qf.zssexp.getFibrationRichGraph(n)
+    Gideal = qf.zssexp.get_fibration_rich_graph(n)
     gt = qf.cc.cardon_crochemore(Gideal)
     gtn = len(set(gt.values()))
     if noise >= 0:
@@ -80,11 +80,11 @@ if args.graph_filename.startswith(":"):
         G = qf.graphs.scramble(Gideal, nAdd=add_noise, nDel=del_noise)
 else:
     dataset_name = "{} [{}]".format(args.graph_filename, args.ground)
-    G = qf.util.readGraph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense)
+    G = qf.util.read_graph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense)
     if args.ground is None:
         gt = qf.cc.cardon_crochemore(G)
     else:
-        gt = qf.util.readLabel(args.ground, skipHeader=args.ground_skip_header, separator=args.ground_separator)
+        gt = qf.util.read_label(args.ground, skipHeader=args.ground_skip_header, separator=args.ground_separator)
     gtn = len(set(gt.values()))
 
 depth = args.depth
@@ -115,14 +115,14 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 
 #Compute agglomerative clustering on the pure ZSS matrix
 logging.info("Starting computation of OED matrix")
-M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+M, nodes, indices = qf.qzss.cached_zss_dist_matrix(G, depth)        
 nM = M/sum(sum(M))
 logging.info("Computation ended")
 Mzss = M
 
 for linkage_type in ["single", "average", "complete"]:
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qzss.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qzss.agclust_optcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
     bestc = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestcn = len(set(bestc.values()))
     bestcnmi = qf.util.nmi(gt, bestc)
@@ -148,14 +148,14 @@ for linkage_type in ["single", "average", "complete"]:
     results[description]=(bestcexn,bestcexnmi)
 
 logging.info("Starting computation of UTD matrix")
-M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
 nM = M/sum(sum(M))
 logging.info("Computation ended")
 
 #Compute agglomerative clustering with A* 
 for linkage_type in ["single", "average", "complete"]:
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qastar.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
     bestuc = qf.qastar.agclust2dict(c, _M, nodes, indices)
     bestucn = len(set(bestuc.values()))
     bestucnmi = qf.util.nmi(gt, bestuc)

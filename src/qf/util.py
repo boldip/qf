@@ -57,7 +57,7 @@ def jaccard_multiset(x, y):
     return num / den
 
 
-def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinates=None, scale=10):
+def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinates=None, scale=10):
     """
         Reads a graph from the given file, possibly skipping the first line (a.k.a. header). If not dense, every line is a `separator`-separated pair of node
         names, each corresponding to an arc. If dense, the header lines contains a first special value (ignored), the separator, and then `separator`-separated target names:
@@ -111,7 +111,7 @@ def readGraph(filename, skipHeader=True, separator="\t", dense=False, coordinate
     return G
 
 
-def readLabel(filename, skipHeader=True, separator="\t"):
+def read_label(filename, skipHeader=True, separator="\t"):
     """
         Reads a label set from the given file, possibly skipping the first line. Every line is a `separator`-separated pair of node
         name and label,
@@ -137,7 +137,7 @@ def readLabel(filename, skipHeader=True, separator="\t"):
     f.close()
     return m
 
-def readCoordinates(filename, skipHeader=True, separator=" "):
+def read_coordinates(filename, skipHeader=True, separator=" "):
     """
         Reads the coordinates of nodes from a given file, possibly skipping the first line. Every line is a separator-separated triple:
         the first element is the node name, the remaining two elements are the X and Y coordinates (two floats), respectively.

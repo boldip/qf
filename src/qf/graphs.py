@@ -15,7 +15,7 @@ from sklearn.cluster import DBSCAN
 from qf.util import indexify
 
 
-def addEdgesWithName(G, triples):
+def add_edges_with_name(G, triples):
     """
         Adds to the graph G a set of arcs with names. Each element of triples is a triple (u,v,n) where u and v are the
         source and target of the arc and n is its name (it will be put in the "label" attribute of the edge).
@@ -32,7 +32,7 @@ def addEdgesWithName(G, triples):
     for u,v,name in triples:
         G.add_edges_from([(u,v,{"label": name})])
 
-def removeEdgesWithNames(G, set_of_names):
+def remove_edges_with_name(G, set_of_names):
     """
         Removes grom a given graph the edges with a given "label" attribute.
 
@@ -176,7 +176,7 @@ def lift(G, fibre):
     for source,target,d in G.edges(data=True):
         for v in fibre[target]:
             w=random.choice(fibre[source])
-            addEdgesWithName(H, [((source, w), (target, v), d["label"] + "_" + str(v))])
+            add_edges_with_name(H, [((source, w), (target, v), d["label"] + "_" + str(v))])
     return H
 
 def minimum_base(G, node2class):
@@ -226,7 +226,7 @@ def scramble(G, nAdd=1, nDel=1, nScr=0):
         if i < nAdd or i >= nAdd + nDel and operation == "add":
             e = random.choice([(u,v,d) for u,v,d in G.edges(data=True)])
             newname = e[2]["label"].split("_")[0] + "_" + str(random.randint(10000, 20000))
-            addEdgesWithName(H, [(e[0],e[1],newname)])
+            add_edges_with_name(H, [(e[0],e[1],newname)])
         else:
             e = random.choice([(u,v,k) for u,v,k in H.edges(keys=True)])
             H.remove_edge(e[0],e[1],e[2])

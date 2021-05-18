@@ -15,7 +15,7 @@ import qf.util
 # Generate a graph with n nodes, get its minimum base and then
 # lift every node with a fibre of [vmin..vmax] elements.
 # Nodes have the form (x,y) where x denotes the fibre.
-def getFibrationRichGraph(n = 10, vmin = 1, vmax = 5, verbose=True):
+def get_fibration_rich_graph(n = 10, vmin = 1, vmax = 5, verbose=True):
     """
         Returns a fibration-rich graph (a graph with some nontrivial fibres w.r.t. minimal fibrations).
         The graph is generated as follows: first a `networkx.scale_free_graph` with n nodes is produced,

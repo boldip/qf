@@ -80,7 +80,7 @@ if args.graph_filename.startswith(":"):
         argparser.error("Wrong synthetic dataset specification {}".format(args.graph_filename))
 
     dataset_name = "Synthetic"
-    Gideal = qf.zssexp.getFibrationRichGraph(n)
+    Gideal = qf.zssexp.get_fibration_rich_graph(n)
     gt = qf.cc.cardon_crochemore(Gideal)
     gtn = len(set(gt.values()))
     if noise >= 0:
@@ -92,12 +92,12 @@ else:
     dataset_name = "{} [{}]".format(args.graph_filename, args.ground)
     coords = None
     if args.coord is not None:
-        coords = qf.util.readCoordinates(args.coord, skipHeader=args.coord_skip_header, separator=args.coord_separator)    
-    G = qf.util.readGraph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense, coordinates=coords)
+        coords = qf.util.read_coordinates(args.coord, skipHeader=args.coord_skip_header, separator=args.coord_separator)    
+    G = qf.util.read_graph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense, coordinates=coords)
     if args.ground is None:
         raise Exception("No ground truth available for real graph")
     else:
-        gt = qf.util.readLabel(args.ground, skipHeader=args.ground_skip_header, separator=args.ground_separator)
+        gt = qf.util.read_label(args.ground, skipHeader=args.ground_skip_header, separator=args.ground_separator)
     gtn = len(set(gt.values()))
 
 depth = args.depth
@@ -130,14 +130,14 @@ results["Cardon-Crochemore"]=(ccn,ccnmi)
 logging.info("Running Agglomerative UED")
 linkage_type = "single"
 logging.info("Computing fallback OED matrix")
-M, nodes, indices = qf.qzss.cachedZssDistMatrix(G, depth)        
+M, nodes, indices = qf.qzss.cached_zss_dist_matrix(G, depth)        
 nM = M/sum(sum(M))
 Mzss = M
 logging.info("Computing UED matrix; may take long (up to {} minutes)".format(args.minutes))
-M, nodes, indices = qf.qastar.qastarDistMatrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
 nM = M/sum(sum(M))
 logging.info("Clustering")
-c, _M, nodes, indices = qf.qastar.agclustOptcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
 bestc = qf.qastar.agclust2dict(c, _M, nodes, indices)
 bestcn = len(set(bestc.values()))
 bestcnmi = qf.util.nmi(gt, bestc)
