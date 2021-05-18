@@ -1,4 +1,10 @@
-## Definitions
+## Contents
+
+- [Definitions](#def)
+- [Basic properties of fibrations](#prop)
+
+
+## <a name=def>Definitions</a>
 
 ### Graphs
 
@@ -33,7 +39,7 @@ The sum of all deficiencies/excesses is called the global deficiency/excess of t
 A _fibration_ is a morphism with total error 0. Formally (and equivalently) it can be defined as a morphism such that for every arc _a_ of the base and every node _y_ in the fibre of its target, there is precisely one arc of the upper graph that has target _y_ and image _a_.
 Any morphism with small total error may be called _quasi-fibration_. Since there is no bound on how large the total error can be, in fact the word quasi-fibration can be used as a synonym of morphism, but when we say "quasi-fibration" we somehow imply that we want its total error to be small.
 
-## Properties
+## <a name=prop>Basic properties of fibrations</a>
 
 ### Local in-isomorphisms
 
