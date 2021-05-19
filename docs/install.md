@@ -72,3 +72,5 @@ start the tutorial:
 $ cd src
 $ jupyter notebook tutorial.ipynb
 ```
+
+Upon entering the notebook, check that the Kernel `qf` is correctly selected.
