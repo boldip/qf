@@ -685,3 +685,199 @@ def uted_astar(x_nodes, x_adj, y_nodes, y_adj, delta = None, heuristic = 1, verb
 
 
     return best_distance, best_solution, len(edist_nodes)
+
+def uted_constrained(x_nodes, x_adj, y_nodes, y_adj, delta = None):
+    """ Implements the constrained unordered tree edit distance algorithm
+    of Zhang (1996).
+
+    In this scheme, we do not permit mappings between disjoint subtrees.
+    Equivalently, one can say that a deletion does not just delete a single
+    node but forces all child subtrees except for a single one to be
+    deleted as well (and the same for insertions). While this does restrict
+    the expressiveness of the edit distance, it does make it polynomial.
+
+
+    Parameters
+    ----------
+    x_nodes: list
+        Nodes of the first tree.
+    x_adj: list
+        Adjacency list of the first tree. Note that the tree must be
+        in depth first search order.
+    y_nodes: list
+        Nodes of the second tree.
+    y_adj: list
+        Adjacency list of the second tree. Note that the tree must be
+        in depth first search order.
+    delta: function (default = None)
+        a function that takes two nodes as inputs and returns their pairwise
+        distance, where delta(x, None) should be the cost of deleting x and
+        delta(None, y) should be the cost of inserting y. If undefined, we use
+        unit costs.
+
+    Returns
+    -------
+    d: float
+        The unordered tree edit distance
+
+    """
+    # pre-compute deletion, insertion, and replacement costs first.
+    m = len(x_nodes)
+    n = len(y_nodes)
+
+    if delta is None:
+        dels = np.ones(m)
+        inss = np.ones(n)
+        reps = np.zeros((m, n))
+        for i in range(m):
+            for j in range(n):
+                if x_nodes[i] != y_nodes[j]:
+                    reps[i, j] = 1.
+    else:
+        dels = np.zeros(m)
+        for i in range(m):
+            dels[i] = delta(x_nodes[i], None)
+        inss = np.zeros(n)
+        for j in range(n):
+            inss[j] = delta(None, y_nodes[j])
+        reps = np.zeros((m, n))
+        for i in range(m):
+            for j in range(n):
+                reps[i, j] = delta(x_nodes[i], y_nodes[j])
+
+    # next, pre-compute deletion and insertion costs for subtrees and
+    # subforests rooted at each node.
+    D_tree   = np.zeros((m+1, n+1))
+    D_forest = np.zeros((m+1, n+1))
+
+    for i in range(m-1, -1, -1):
+        # Compute the subforest deletion cost for i, i.e. the cost
+        # for deleting all of i's child subtrees
+        for c in x_adj[i]:
+            D_forest[i, n] += D_tree[c, n]
+        # Deleting the tree rooted at i means deleting node i and all its
+        # children
+        D_tree[i, n] = dels[i] + D_forest[i, n]
+
+    for j in range(n-1, -1, -1):
+        # Compute the subforest insertion cost for j, i.e. the cost
+        # for inserting all of j's child subtrees
+        for c in y_adj[j]:
+            D_forest[m, j] += D_tree[m, c]
+        # Inserting the tree rooted at j means inserting node j and all its
+        # children
+        D_tree[m, j] = inss[j] + D_forest[m, j]
+
+    # now, start the actual recursion
+    for i in range(m-1, -1, -1):
+        for j in range(n-1, -1, -1):
+            m_i = len(x_adj[i])
+            n_j = len(y_adj[j])
+            # First, we compute the forest edit distance, i.e. the cost for
+            # editing all children of i into all children of j.
+
+            # We consider first the special case that either i or
+            # j have no children. Then, the computation is really
+            # simple because we can only delete/insert
+            if m_i == 0:
+                D_forest[i, j] = D_forest[m, j]
+            elif n_j == 0:
+                D_forest[i, j] = D_forest[i, n]
+            else:
+                # if both nodes have children, perform the actual computation.
+                # For that, we have three options.
+                # First, we could delete all children of i except for a single
+                # subtree
+                del_options = np.zeros(m_i)
+                for c in range(m_i):
+                    i_c = x_adj[i][c]
+                    # accordingly, we need to consider the cost of editing
+                    # the children of node i_c with the children of j,
+                    # plus the cost of deleting all other children of i.
+                    del_options[c] = D_forest[i_c, j] + D_forest[i, n] - D_forest[i_c, n]
+                del_cost = np.min(del_options)
+                # Second, we could insert all children of j except for a single
+                # subtree
+                ins_options = np.zeros(n_j)
+                for c in range(n_j):
+                    j_c = y_adj[j][c]
+                    # accordingly, we need to consider the cost of editing
+                    # the children of node i to the children of j_c,
+                    # plus the cost of inserting all other children of j.
+                    ins_options[c] = D_forest[i, j_c] + D_forest[m, j] - D_forest[m, j_c]
+                ins_cost = np.min(ins_options)
+                # Third, we could replace, meaning that we optimally match all
+                # children of i to all children of j. We use the Hungarian
+                # algorithm for this purpose.
+                # prepare a cost matrix for the Hungarian algorithm
+                C = np.full((m_i + n_j, m_i + n_j), np.inf)
+                for ci in range(m_i):
+                    for cj in range(n_j):
+                        # matching ci with cj means editing the ci'th
+                        # child of i to the cj'th child of j.
+                        C[ci, cj] = D_tree[x_adj[i][ci], y_adj[j][cj]]
+                for c in range(m_i):
+                    # matching c with n_j + c means deleting the
+                    # c'th child of i
+                    C[c, n_j + c] = D_tree[x_adj[i][c], n]
+                for c in range(n_j):
+                    # matching m_i + c with c means inserting the
+                    # c'th child of j
+                    C[m_i + c, c] = D_tree[m, y_adj[j][c]]
+                C[m_i:, n_j:] = 0.
+                # solve the linear sum assignment problem for C. The resulting
+                # minimum cost is our replacement cost
+                I, J = linear_sum_assignment(C)
+                rep_cost = C[I, J].sum()
+                # compute minimum across deletion, insertion, and replacement
+                D_forest[i, j] = min3_(del_cost, ins_cost, rep_cost)
+
+            # next, compute the unordered tree edit distance between the
+            # subtrees rooted at i and j.
+            # Again, we have three options.
+            # First, we could delete node i and all subtrees except a
+            # single one.
+            if m_i == 0:
+                del_cost = D_tree[m, j]
+            else:
+                del_options = np.zeros(m_i)
+                for c in range(m_i):
+                    i_c = x_adj[i][c]
+                    # accordingly, we need to consider the cost of editing
+                    # tree i_c into tree j plus the cost of deleting all other
+                    # children of i.
+                    del_options[c] = D_tree[i_c, j] + D_tree[i, n] - D_tree[i_c, n]
+                del_cost = np.min(del_options)
+            # Second, we could insert node j and all children of j except
+            # for a single one.
+            if n_j == 0:
+                ins_cost = D_tree[i, n]
+            else:
+                ins_options = np.zeros(n_j)
+                for c in range(n_j):
+                    j_c = y_adj[j][c]
+                    # accordingly, we need to consider the cost of editing
+                    # tree i into tree j_c plus the cost o inserting all other
+                    # children of j.
+                    ins_options[c] = D_tree[i, j_c] + D_tree[m, j] - D_tree[m, j_c]
+                ins_cost = np.min(ins_options)
+            # Third, we could replace, meaning that we edit node i into
+            # node j and all children of i into all children of j
+            rep_cost = reps[i, j] + D_forest[i, j]
+            # compute minimum across deletion, insertion, and replacement
+            D_tree[i, j] = min3_(del_cost, ins_cost, rep_cost)
+
+    # Once the recursion is complete, return the first element
+    return D_tree[0, 0]
+
+def min3_(x, y, z):
+    if x < y:
+        if x < z:
+            return x
+        else:
+            return z
+    else:
+        if y < z:
+            return y
+        else:
+            return z

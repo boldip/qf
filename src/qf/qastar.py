@@ -95,7 +95,7 @@ def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=Non
                     stopped += 1
                     if Msubs is not None:
                         M[i,j] = Msubs[i,j]
-                    logging.info("uted_aster stopped, substituted with {}".format(M[i,j]))
+                    logging.info("uted_astar and uted_constrained both stopped, substituted with {}".format(M[i,j]))
     for i in range(n):
         for j in range(i + 1):
             if i == j:

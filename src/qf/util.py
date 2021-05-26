@@ -4,6 +4,7 @@ from collections import Counter
 from contextlib import contextmanager
 from queue import Queue
 
+import logging
 import matplotlib as mpl
 import networkx as nx
 import numpy as np
@@ -268,6 +269,9 @@ def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
     """
         A wrapper to compute the Unordered Tree edit Distance between two trees (in the node/adjacency form).
         The computation is stopped after a given number of seconds, after which a default value is returned.
+        More precisely, 3/4 of the time is devoted to trying to compute `qf.uted.uted.uted_astar`. Then, if
+        the computation is not yet over, 1/4 of the time is devoted in trying to compute `qf.uted.uted.uted_constrained`.
+        If both fail to succeed in time, the default value is returned
 
         Args:
             n1 (list): the node part of a node/adjacency representation of a tree.
@@ -283,9 +287,14 @@ def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
     if max_seconds is None:
         return qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]
     try:
-        with time_limit(max_seconds):
+        with time_limit(max_seconds * 3 / 4):
             result = qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]
     except TimeoutException:
-        result = default
+        logging.info("uted_astar stopped after {} seconds".format(max_seconds * 3 / 4))
+        try:
+            with time_limit(max_seconds / 4):
+                result = qf.uted.uted.uted_constrained(n1, a1, n2, a2)
+        except TimeoutException:
+            logging.info("uted_constrained stopped after {} seconds".format(max_seconds / 4))
+            result = default
     return result
-
