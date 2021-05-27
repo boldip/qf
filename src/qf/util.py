@@ -289,9 +289,12 @@ def utd_to(n1, a1, n2, a2, max_seconds=None, default=-1):
     try:
         with time_limit(max_seconds * 3 / 4):
             result = qf.uted.uted.uted_astar(n1, a1, n2, a2)[0]
+            #result = qf.uted.uted.uted_constrained(n1, a1, n2, a2) ###delete this
+            result = default ###delete this
     except TimeoutException:
         logging.info("uted_astar stopped after {} seconds".format(max_seconds * 3 / 4))
         try:
+            return default
             with time_limit(max_seconds / 4):
                 result = qf.uted.uted.uted_constrained(n1, a1, n2, a2)
         except TimeoutException:
