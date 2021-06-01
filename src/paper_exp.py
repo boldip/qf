@@ -112,6 +112,10 @@ ccn =  len(set(cc.values()))
 ccnmi = qf.util.nmi(gt, cc)
 results["Cardon-Crochemore"]=(ccn,ccnmi)
 
+#Compute depth-limited Cardon-Crochemore
+logging.info("Running depth-limited Cardon-Crochemore")
+ccdl = qf.cc.cardon_crochemore(G, max_step=depth)
+ccdln = len(set(ccdl.values()))
 
 #Compute agglomerative clustering on the pure ZSS matrix
 logging.info("Starting computation of OED matrix")
@@ -148,14 +152,14 @@ for linkage_type in ["single", "average", "complete"]:
     results[description]=(bestcexn,bestcexnmi)
 
 logging.info("Starting computation of UTD matrix")
-M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes, zero=ccdl)       
 nM = M/sum(sum(M))
 logging.info("Computation ended")
 
 #Compute agglomerative clustering with A* 
 for linkage_type in ["single", "average", "complete"]:
     # Agglomerative clustering
-    c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccdln, nM, nodes, indices, linkage_type=linkage_type, zero=ccdl)
     bestuc = qf.qastar.agclust2dict(c, _M, nodes, indices)
     bestucn = len(set(bestuc.values()))
     bestucnmi = qf.util.nmi(gt, bestuc)
@@ -173,7 +177,7 @@ for linkage_type in ["single", "average", "complete"]:
 
     #Compute agglomerative clustering with exact number of clusters
 
-    c, _M, nodes, indices = qf.qastar.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type)
+    c, _M, nodes, indices = qf.qastar.agclust(G, depth, gtn, nM, nodes, indices, linkage_type=linkage_type, zero=ccdl)
     bestucex = qf.qzss.agclust2dict(c, _M, nodes, indices)
     bestucexn = len(set(bestucex.values()))
     bestucexnmi = qf.util.nmi(gt, bestucex)

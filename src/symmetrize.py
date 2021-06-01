@@ -119,11 +119,15 @@ for i in range(len(nodes)):
 
 #Compute Cardon-Crochemore
 logging.info("Running Cardon-Crochemore")
-cc=qf.cc.cardon_crochemore(G)
+cc = qf.cc.cardon_crochemore(G)
 ccn =  len(set(cc.values()))
 ccnmi = qf.util.nmi(gt, cc)
 results["Cardon-Crochemore"]=(ccn,ccnmi)
 
+#Compute depth-limited Cardon-Crochemore
+logging.info("Running depth-limited Cardon-Crochemore")
+ccdl = qf.cc.cardon_crochemore(G, max_step=depth)
+ccdln = len(set(ccdl.values()))
 
 #Compute agglomerative clustering on the pure ZSS matrix
 # ZSS matrix
@@ -134,10 +138,10 @@ M, nodes, indices = qf.qzss.cached_zss_dist_matrix(G, depth)
 nM = M/sum(sum(M))
 Mzss = M
 logging.info("Computing UED matrix; may take long (up to {} minutes)".format(args.minutes))
-M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes)       
+M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes, zero=ccdl)       
 nM = M/sum(sum(M))
 logging.info("Clustering")
-c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccn, nM, nodes, indices, linkage_type=linkage_type)
+c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccdln, nM, nodes, indices, linkage_type=linkage_type)
 bestc = qf.qastar.agclust2dict(c, _M, nodes, indices)
 bestcn = len(set(bestc.values()))
 bestcnmi = qf.util.nmi(gt, bestc)

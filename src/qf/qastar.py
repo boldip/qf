@@ -46,7 +46,7 @@ def qastar_all_paths(G, target, maxLen, nodeColoring=None):
         return ([nodeColoring[x] for x in n], a)
 
 
-def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None):
+def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=None, zero=None):
     """
         Given a graph G and a value t, it computes all the `qastar_all_paths(G,x,t)` trees (for all nodes x of G) and 
         computes all-pairs matrix of `uted.uted.uted_astar` distances. The matrix is returned as an np.ndarray, along with the list of nodes (in the order 
@@ -60,6 +60,8 @@ def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=Non
             max_milliseconds (int): if not None, it will try to keep the overall computation required within the specified number of milliseconds;
                 if the computation of a given entry of the matrix exceeds the time-limit imposed, and `Msubs` is not None, the corresponding entry
                 of `Msubs` is used instead.
+            zero (dict): if not None, it is a dictionary whose keys are nodes: nodes with the same value are assigned distance zero without any
+                further processing.
 
         Returns:
             a tuple (M, nodes, indices), where
@@ -81,7 +83,9 @@ def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=Non
     total_size=n*(n-1)/2 # Number of entries to be computed
     for i in range(n):
         for j in range(i + 1, n):
-            #if nodes[i]=="VB06" and nodes[j]=="VB07":
+            if zero is not None and zero[nodes[i]] == zero[nodes[j]]:
+                M[i,j] = 0
+                continue
             logging.debug("Computing distance from {} [{}] to {} [{}] ({:.3}%)".format(i,nodes[i],j,nodes[j],100*c/total_size))
             logging.debug("Tree 1: {}".format(d[nodes[i]]))
             logging.debug("Tree 2: {}".format(d[nodes[j]]))
@@ -105,7 +109,7 @@ def qastar_dist_matrix(G, t, Msubs=None, nodeColoring=None, max_milliseconds=Non
     logging.info("Stopped {:.2f}% of the times".format(100*stopped/total_size))
     return (M, nodes, indices)
 
-def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", zero=None):
     """
         Given a graph G, it  produces an agglomerative
         clustering with `num_clusters` clusters. The result is returned in the same form as that returned by
@@ -122,6 +126,8 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
             linkage_type (str): the linkage type used to compute distances.
+            zero (dict): if not None, it is a dictionary whose keys are nodes: nodes with the same value are assigned distance zero without any
+                further processing.
 
         Returns:
             a tuple (clustering, M, nodes, indices):
@@ -131,7 +137,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
             - indices the dictionary from nodes to indices.
    """
     if M is None:
-        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring)
+        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring, zero=zero)
     clustering = sklearn.cluster.AgglomerativeClustering(
         affinity="precomputed", linkage=linkage_type, 
         n_clusters=num_clusters, compute_distances=True)
@@ -139,7 +145,7 @@ def agclust(G, t, num_clusters, M=None, nodes=None, indices=None, nodeColoring=N
     return (clustering, M, nodes, indices)
 
 
-def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", zero=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -157,6 +163,9 @@ def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColo
             linkage_type (str): the linkage type used to compute distances.
             order_label (str): if not None, every node must have that label as attribute, and the associated values are used
                 to sort children in trees.
+            zero (dict): if not None, it is a dictionary whose keys are nodes: nodes with the same value are assigned distance zero without any
+                further processing.
+
 
         Returns:
             The result returned is the same as in `agclust`, but the first component is a dictionary with 
@@ -165,7 +174,7 @@ def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColo
             adding the corresponding result to the dictionary.
     """
     if M is None:
-        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring)
+        M, nodes, indices = qastar_dist_matrix(G, t, nodeColoring, zero)
     res = {}
     for cl in range(minCl, maxCl):
         try:
@@ -180,7 +189,7 @@ def agclust_varcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColo
             pass
     return (res, M, nodes, indices)
 
-def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single"):
+def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColoring=None, linkage_type="single", zero=None):
     """
         Given a graph G, it computes a clustering (calling `agclust`)
         clustering with a number of clusters varying from minCl (inclusive) to maxCl (exclusive).
@@ -198,6 +207,8 @@ def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColo
             indices (dict): the dictionary from nodes to indices; it must be None exactly when M is None.
             nodeColoring (dict): used to compute the distance matrix (when M is not None).
             linkage_type (str): the linkage type used to compute distances.
+            zero (dict): if not None, it is a dictionary whose keys are nodes: nodes with the same value are assigned distance zero without any
+                further processing.
 
         Returns:
             a tuple (clustering, M, nodes, indices):
@@ -206,7 +217,7 @@ def agclust_optcl(G, t, minCl, maxCl, M=None, nodes=None, indices=None, nodeColo
             - nodes the list of nodes used to index M
             - indices the dictionary from nodes to indices.
     """
-    res, M, nodes, indices = agclust_varcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type)
+    res, M, nodes, indices = agclust_varcl(G, t, minCl, maxCl, M, nodes, indices, nodeColoring, linkage_type, zero=None)
     maxsilhouette=max([v[1] for v in res.values()])
     for optCl in res.keys():
         if res[optCl][1]==maxsilhouette:
