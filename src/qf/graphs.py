@@ -1,6 +1,7 @@
 import os
 import random
 import tempfile
+import logging
 from collections import Counter
 
 import matplotlib as mpl
@@ -94,10 +95,18 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
     if not labelNodes:
         nx.set_node_attributes(G, {x: "" for x in G.nodes}, "label")       
     nx.nx_pydot.write_dot(G, dot_filename)
+
+    fdpCommand = "fdp -Goverlap=scale -Tpng -Gsplines=true {} -o {}".format(dot_filename, png_filename)
+    dotCommand = "dot -T png {} -o {}".format(dot_filename, png_filename)
+
     if len(nx.get_node_attributes(G, "pos")) > 0:
-        os.system("fdp -Goverlap=scale -Tpng -Gsplines=true {} -o {}".format(dot_filename, png_filename))
+        result = os.system(fdpCommand)
+        if(result != 0):
+            logging.error("Error executing command {}".format(fdpCommand))
     else:
-        os.system("dot -T png {} -o {}".format(dot_filename, png_filename))
+        result = os.system(dotCommand)
+        if(result != 0):
+            logging.error("Error executing command {}".format(dotCommand))
 
 def visualize(G, colors=None, labelNodes=True, labelArcs=True):
     """
@@ -120,7 +129,11 @@ def visualize(G, colors=None, labelNodes=True, labelArcs=True):
     dot_filename = tempfile.NamedTemporaryFile(suffix=".dot").name
     png_filename = tempfile.NamedTemporaryFile(suffix=".png").name
     _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs)
-    return Image(filename=png_filename)
+    if(os.path.isfile(png_filename)):
+        return Image(filename=png_filename)
+    else:
+        logging.error("{} has not been created".format(png_filename))
+
 
 def save(G, dot_filename=None, png_filename=None, colors=None, labelNodes=True, labelArcs=True):
     """
