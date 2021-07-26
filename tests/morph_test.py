@@ -74,6 +74,30 @@ class TestMorph(unittest.TestCase):
         self.assertFalse(qf.morph.is_fibration({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Incompatible
 
     
+    def test_is_compatible(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b")])
+        single_loop = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(single_loop, [(0, 0, "a")])
+        f = {0: 0, 1: 0, "a": "a", "b": "a"}
+        fp = {0: 1, 1: 0, "a": "a", "b": "a"}
+        fp2 = {0: 0, 1: 0, "a": "b", "b": "a"}
+        self.assertRaises(Exception, qf.morph.is_compatible, back_forth, back_forth, f)
+        self.assertRaises(Exception, qf.morph.is_compatible, back_forth, back_forth, None, f)
+        self.assertFalse(qf.morph.is_compatible(back_forth, single_loop))
+        self.assertFalse(qf.morph.is_compatible(back_forth, back_forth, f, fp))
+        self.assertFalse(qf.morph.is_compatible(back_forth, back_forth, f, fp2))
+
+        single_a_loop_and_node = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(single_a_loop_and_node, [(0, 0, "a")])
+        single_a_loop_and_node.add_node(1)
+        single_b_loop_and_node = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(single_b_loop_and_node, [(0, 0, "b")])
+        single_b_loop_and_node.add_node(1)
+        self.assertFalse(qf.morph.is_compatible(back_forth, single_a_loop_and_node, f, f)) # diff target
+        self.assertFalse(qf.morph.is_compatible(back_forth, single_b_loop_and_node, f, f)) # dif source
+
+
     def test_excess_deficiency(self):
         back_forth = nx.MultiDiGraph()
         qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b")])
