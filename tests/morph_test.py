@@ -17,6 +17,8 @@ class TestMorph(unittest.TestCase):
         self.assertEqual(1, qf.morph.source(G, "b"))
         self.assertEqual(3, qf.morph.target(G, "c"))
         self.assertEqual(4, qf.morph.target(G, "d"))
+        self.assertEqual(None, qf.morph.source(G, "g"))
+        self.assertEqual(None, qf.morph.target(G, "g"))
         self.assertEqual(set(["a", "b", "c", "d", "e", "f"]), qf.morph.arcs(G))
         s = qf.morph.arcs(G)
         for i in range(10):
@@ -35,13 +37,23 @@ class TestMorph(unittest.TestCase):
         double_loop_and_node = nx.MultiDiGraph()
         qf.graphs.add_edges_with_name(double_loop_and_node, [(0, 0, "a"), (0, 0, "b")])
         double_loop_and_node.add_node(1)
+        # Morph
         self.assertTrue(qf.morph.is_morphism({0: 0, 1: 1, "a": "a", "b": "b"}, back_forth, back_forth))
-        self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Incompatible
+        self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Incompatible s
+        self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "a": "a", "b": "b"}, back_forth, double_loop_and_node))  # Incompatible t
         self.assertFalse(qf.morph.is_morphism({1: 1, "a": "a", "b": "b"}, back_forth, back_forth)) #  Missing node
         self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "a": "a"}, back_forth, back_forth)) # Missing arc
-        self.assertTrue(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, single_loop))
+        self.assertTrue(qf.morph.is_morphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, single_loop))
         self.assertTrue(qf.morph.is_morphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop))
         self.assertTrue(qf.morph.is_morphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, double_loop))
+
+        self.assertFalse(qf.morph.is_morphism({2: 0, 1: 1, "a": "a", "b": "b"}, back_forth, back_forth))  # wrong node key
+        self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "c": "a", "b": "b"}, back_forth, back_forth))  # wrong arc key
+        self.assertFalse(qf.morph.is_morphism({0: 2, 1: 1, "a": "a", "b": "b"}, back_forth, back_forth))  # wrong node value
+        self.assertFalse(qf.morph.is_morphism({0: 0, 1: 1, "a": "c", "b": "b"}, back_forth, back_forth))  # wrong arc value
+        self.assertFalse(qf.morph.is_morphism({0: 0, 1: "a", "a": "a", "b": "b"}, back_forth, back_forth))  # type mismatch
+        self.assertFalse(qf.morph.is_morphism({0: 0, "a": 1, "a": "a", "b": "b"}, back_forth, back_forth))  # type mismatch
+        
         # Epi
         self.assertTrue(qf.morph.is_epimorphism({0: 0, 1: 1, "a": "a", "b": "b"}, back_forth, back_forth))
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Not a morphism
@@ -51,9 +63,17 @@ class TestMorph(unittest.TestCase):
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, double_loop)) # Not epi on arcs
         self.assertTrue(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop)) 
         self.assertFalse(qf.morph.is_epimorphism({0: 0, 1: 0, "a": "a", "b": "b"}, back_forth, double_loop_and_node)) # Not epi on nodes
+
+        # Iso
+        self.assertTrue(qf.morph.is_isomorphism({0: 0, 1: 1, "a": "a", "b": "b"}, back_forth, back_forth))
+        self.assertFalse(qf.morph.is_isomorphism({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth)) # Not a epimorphism
+        self.assertFalse(qf.morph.is_isomorphism({0: 0, 1: 0, "a": "a", "b": "a"}, back_forth, single_loop)) # Injective on nodes
+        self.assertFalse(qf.morph.is_isomorphism({0: 0, "a": "a", "b": "a"}, double_loop, single_loop)) # Injective on arcs
+
         # Fibration
         self.assertFalse(qf.morph.is_fibration({0: 0, 1: 1, "a": "b", "b": "a"}, back_forth, back_forth))  # Incompatible
 
+    
     def test_excess_deficiency(self):
         back_forth = nx.MultiDiGraph()
         qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b")])
