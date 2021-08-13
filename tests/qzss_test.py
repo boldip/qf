@@ -136,5 +136,15 @@ class TestZss(unittest.TestCase):
         self.assertEqual(d[0], d[1])
         self.assertEqual(d[2], d[3])
         self.assertNotEqual(d[0], d[2])
+    
+    def test_zssDistBis_alt_coloring(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b"), (0, 0, "c")])
+        M, nodes, indices = qf.qzss.cached_zss_dist_matrix_alt(back_forth, 3, {0: "x", 1: "y"})
+        self.assertEqual(0, M[indices[0], indices[0]])
+        self.assertEqual(0, M[indices[1], indices[1]])
+        self.assertEqual(5, M[indices[0], indices[1]]) # 4 insertions, 1 rename
+        self.assertEqual(5, M[indices[1], indices[0]])
+        self.assertEqual(set(nodes), set(back_forth.nodes()))
 
 if __name__ == "__main__": unittest.main()
