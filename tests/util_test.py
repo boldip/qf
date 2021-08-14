@@ -1,5 +1,6 @@
 import networkx as nx
 import tempfile
+import time
 import unittest
 
 import qf.util
@@ -175,6 +176,18 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(["a", "c", "d", "e", "b", "a"], np)
         self.assertEqual([[1, 4], [2, 3], [], [], [5], []], ap)
         self.assertEqual(0.0, qf.uted.uted.uted_astar(n, a, np, ap)[0])
+    
+    def test_time_limit(self):
+        def _test():
+            with qf.util.time_limit(1):
+                time.sleep(2)
+        self.assertRaises(qf.util.TimeoutException, _test)
+    
+    def test_uted_timeout(self):
+        nd = ["x" for i in range(6)]
+        t1 = [[1,3], [2], [], [4,5], [], []]   # x(x(x),x(x,x))
+        t2 = [[1,4], [2,3], [], [], [5], []]   # x(x(x,x),x(x))
+        self.assertEqual(0.0, qf.util.utd_to(nd, t1, nd, t2)) # max_seconds None
 
 
 if __name__ == "__main__": unittest.main()
