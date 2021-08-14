@@ -147,4 +147,15 @@ class TestZss(unittest.TestCase):
         self.assertEqual(5, M[indices[1], indices[0]])
         self.assertEqual(set(nodes), set(back_forth.nodes()))
 
+    def test_zssDistBis_coloring_order(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b"), (0, 0, "c")])
+        qf.qzss.katz_preorder(back_forth, "katz_centrality")
+        M, nodes, indices = qf.qzss.cached_zss_dist_matrix(back_forth, 3, {0: "x", 1: "y"}, "katz_centrality")
+        self.assertEqual(0, M[indices[0], indices[0]])
+        self.assertEqual(0, M[indices[1], indices[1]])
+        self.assertEqual(5, M[indices[0], indices[1]])
+        self.assertEqual(5, M[indices[1], indices[0]])
+        self.assertEqual(set(nodes), set(back_forth.nodes()))
+
 if __name__ == "__main__": unittest.main()
