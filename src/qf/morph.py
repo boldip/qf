@@ -258,11 +258,11 @@ def excess_deficiency(f, G, B, verbose=False):
             ts = set([ap for ap in arcs(G) if f[ap]==a and target(G, ap)==x])
             if len(ts) == 0:
                 if verbose:
-                    print("DEFICIENCY: cannot lift arc {} at {}".format(a, x))
+                    logging.info("DEFICIENCY: cannot lift arc {} at {}".format(a, x))
                 deficiency += 1
             else:
                 if verbose and len(ts)>1:
-                    print("EXCESS: lifting arc {} at {} gives {} excess results".format(a, x, len(ts) - 1))
+                    logging.info("EXCESS: lifting arc {} at {} gives {} excess results".format(a, x, len(ts) - 1))
                 excess += len(ts) - 1
     return (excess, deficiency)
 
@@ -324,14 +324,14 @@ def repair(f, G, B, seed=0, verbose=False):
                 src = random.sample([s for s in G.nodes if f[s]==source(B,a)],1)[0]
                 qf.graphs.add_edges_with_name(Gp,[(src, x, a_to_add)])
                 if verbose:
-                    print("Adding arc {}: {} -> {} (mapped to {})".format(a_to_add, src, x, a))
+                    logging.info("Adding arc {}: {} -> {} (mapped to {})".format(a_to_add, src, x, a))
                 fp[a_to_add] = a
             else:
                 ts = list(set(ts).difference(random.sample(ts,1)))
                 for a_to_remove in ts:
                     xr,yr,kr = get_arc(Gp, a_to_remove)
                     if verbose:
-                        print("Removing arc {}: {} -> {}".format(a_to_remove, xr, yr))
+                        logging.info("Removing arc {}: {} -> {}".format(a_to_remove, xr, yr))
                     Gp.remove_edge(xr,yr,key=kr)
                     del fp[a_to_remove]
     return (Gp, fp)
@@ -375,7 +375,7 @@ def qf_build(G, c, verbose=False):
                 continue
             k = max(int(statistics.median(v)), 1) #WHY MAX
             if verbose:
-                print("{} -> {}: {} median {}".format(source_klass, target_klass, v, k))
+                logging.info("{} -> {}: {} median {}".format(source_klass, target_klass, v, k))
             arc_label = []
             for i in range(k):
                 arc_label.append("{}_{}_{}".format(source_klass, target_klass, i))

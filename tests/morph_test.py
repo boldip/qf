@@ -117,7 +117,24 @@ class TestMorph(unittest.TestCase):
         x, d = qf.morph.excess_deficiency(f, double_loop, single_loop)
         self.assertEqual(1, x)
         self.assertEqual(0, d)
+    
+    def test_excess_deficiency_verbose(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b")])
+        single_loop = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(single_loop, [(0, 0, "a")])
+        double_loop = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(double_loop, [(0, 0, "a"), (0, 0, "b")])
+    
+        with self.assertLogs(level='INFO') as log:
+            f = {0: 0, 1: 0, "a": "a", "b": "b"}   # two missing liftings from back_forth to double_loop
+            x, d = qf.morph.excess_deficiency(f, back_forth, double_loop, True)
+            self.assertTrue(any("DEFICIENCY: cannot lift arc a at 0" in s for s in log.output))
+            self.assertTrue(any("DEFICIENCY: cannot lift arc b at 1" in s for s in log.output))
 
+            f = {0: 0, "a": "a", "b": "a"}  # one excess lifting from double_loop to single_loop
+            x, d = qf.morph.excess_deficiency(f, double_loop, single_loop, True)
+            self.assertIn("EXCESS: lifting arc a at 0 gives 1 excess result", log.output[2])
 
     def test_repair(self):
         back_forth = nx.MultiDiGraph()
@@ -143,6 +160,24 @@ class TestMorph(unittest.TestCase):
         self.assertEqual(0, len(qf.morph.arcs(Gp) - qf.morph.arcs(double_loop)))
         self.assertEqual(1, len(qf.morph.arcs(double_loop) - qf.morph.arcs(Gp)))
         self.assertTrue(qf.morph.is_fibration(fp, Gp, single_loop))
+    
+    def test_repair_verbose(self):
+        back_forth = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(back_forth, [(0, 1, "a"), (1, 0, "b")])
+        single_loop = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(single_loop, [(0, 0, "a")])
+        double_loop = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(double_loop, [(0, 0, "a"), (0, 0, "b")])
+        with self.assertLogs(level='INFO') as log:
+            f = {0: 0, 1: 0, "a": "a", "b": "b"}   # two missing liftings from back_forth to double_loop
+            Gp, fp = qf.morph.repair(f, back_forth, double_loop, None, True)
+            self.assertIn("Seed for repair set to", log.output[0])
+            self.assertIn("Adding arc ", log.output[1])
+            self.assertIn("Adding arc ", log.output[2])
+        
+            f = {0: 0, "a": "a", "b": "a"}  # one excess lifting from double_loop to single_loop
+            Gp, fp = qf.morph.repair(f, double_loop, single_loop, 4000, True)
+            self.assertIn("Removing arc b: 0 -> 0", log.output[3])
 
     def test_qf_build(self):
         two_one = nx.MultiDiGraph()
@@ -155,5 +190,15 @@ class TestMorph(unittest.TestCase):
         self.assertTrue(1, B.number_of_nodes())
         self.assertTrue(2, B.number_of_edges())
         qf.morph.is_epimorphism(f, two_one, B)
+    
+    def test_qf_build_verbose(self):
+        two_one = nx.MultiDiGraph()
+        qf.graphs.add_edges_with_name(two_one, [(0, 1, "a1"), (0, 1, "a2"), (1, 0, "b")])
+        with self.assertLogs(level='INFO') as log:
+            B, f = qf.morph.qf_build(two_one, {0: 0, 1: 1}, True)
+            self.assertTrue(qf.morph.is_isomorphism(f, two_one, B))
+            self.assertTrue(any("1 -> 0: [1] median 1" in s for s in log.output))
+            self.assertTrue(any("0 -> 1: [2] median 2" in s for s in log.output))
+
 
 if __name__ == "__main__": unittest.main()
