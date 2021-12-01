@@ -1,6 +1,6 @@
 # qf
 
-A package related to building quasi-fibration symmetries di merda.
+A package related to building quasi-fibration symmetries of graphs.
 
 If you'd like to learn more about how it works, see the brief explanation and References below.
 
