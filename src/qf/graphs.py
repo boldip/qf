@@ -257,9 +257,11 @@ def scramble(G, nAdd=1, nDel=1, nScr=0):
     for i in range(nAdd + nDel + nScr):
         operation = random.choice(["add", "delete"])
         if i < nAdd or i >= nAdd + nDel and operation == "add":
-            e = random.choice([(u,v,d) for u,v,d in G.edges(data=True)])
-            newname = e[2]["label"].split("_")[0] + "_" + str(random.randint(10000, 20000))
-            add_edges_with_name(H, [(e[0],e[1],newname)])
+            u = random.choice(list(G.nodes()))
+            v = random.choice(list(G.nodes()))
+            #e = random.choice([(u,v,d) for u,v,d in G.edges(data=True)])
+            newname = "new_" + str(random.randint(10000, 20000))
+            add_edges_with_name(H, [(u,v,newname)])
         else:
             e = random.choice([(u,v,k) for u,v,k in H.edges(keys=True)])
             H.remove_edge(e[0],e[1],e[2])
