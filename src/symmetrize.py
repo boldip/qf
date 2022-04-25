@@ -53,26 +53,32 @@ argparser.add_argument("output_basename", type=str,
                        help="Output basename")
 argparser.add_argument("--ground", type=str,
                        help="File with ground truth (otherwise, the coarsest equitable partition will be used)")
+argparser.add_argument("--colour", type=str,
+                       help="File with colouring (if provided, colouring will not be computed)")
 argparser.add_argument("--coord", type=str,
                        help="File with the coordinates to be used for the display")
 argparser.add_argument("--depth", type=int, default=2,
                        help="Tree cut depth")
 #argparser.add_argument("--prec", type=int, default=10,
 #                       help="Precision in parameter grids")
-argparser.add_argument("--graph_skip_header", action="store_false",
+argparser.add_argument("--graph_skip_header", action="store_true",
                        help="Skip headers while reading graph file")
 argparser.add_argument("--graph_separator", type=str, default="\t",
                        help="Separator used in graph file")
 argparser.add_argument("--graph_is_dense", action="store_true",
                        help="Whether the graph is specified in the dense format")
-argparser.add_argument("--coord_skip_header", action="store_false",
+argparser.add_argument("--coord_skip_header", action="store_true",
                        help="Skip headers while reading coord file")
 argparser.add_argument("--coord_separator", type=str, default=" ",
                        help="Separator used in coord file")
-argparser.add_argument("--ground_skip_header", action="store_false",
+argparser.add_argument("--ground_skip_header", action="store_true",
                        help="Skip headers while reading ground truth file")
 argparser.add_argument("--ground_separator", type=str, default="\t",
                        help="Separator used in ground truth file")
+argparser.add_argument("--colour_skip_header", action="store_true",
+                       help="Skip headers while reading colour file")
+argparser.add_argument("--colour_separator", type=str, default="\t",
+                       help="Separator used in colour file")
 argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
 argparser.add_argument("--minutes", type=int, default=60,
@@ -144,29 +150,40 @@ ccn =  len(set(cc.values()))
 ccnmi = qf.util.nmi(gt, cc)
 results["Cardon-Crochemore"]=(ccn,ccnmi)
 
-#Compute depth-limited Cardon-Crochemore
-logging.info("Running depth-limited Cardon-Crochemore")
-ccdl = qf.cc.cardon_crochemore(G, max_step=depth)
-ccdln = len(set(ccdl.values()))
+if args.colour is None:
+	#Compute depth-limited Cardon-Crochemore
+	logging.info("Running depth-limited Cardon-Crochemore")
+	ccdl = qf.cc.cardon_crochemore(G, max_step=depth)
+	ccdln = len(set(ccdl.values()))
 
-#Compute agglomerative clustering on the pure ZSS matrix
-# ZSS matrix
-logging.info("Running Agglomerative UED")
-linkage_type = "single"
-logging.info("Computing fallback OED matrix")
-M, nodes, indices = qf.qzss.cached_zss_dist_matrix(G, depth)        
-nM = M/sum(sum(M))
-Mzss = M
-logging.info("Computing UED matrix; may take long (up to {} minutes)".format(args.minutes))
-M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes, zero=ccdl)       
-nM = M/sum(sum(M))
-logging.info("Clustering")
-c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccdln, nM, nodes, indices, linkage_type=linkage_type)
-bestc = qf.qastar.agclust2dict(c, _M, nodes, indices)
-bestcn = len(set(bestc.values()))
-bestcnmi = qf.util.nmi(gt, bestc)
-description="Agglomerative UED (linkage={})".format(linkage_type)
-results[description]=(bestcn,bestcnmi)
+	#Compute agglomerative clustering on the pure ZSS matrix
+	# ZSS matrix
+	logging.info("Running Agglomerative UED")
+	linkage_type = "single"
+	logging.info("Computing fallback OED matrix")
+	M, nodes, indices = qf.qzss.cached_zss_dist_matrix(G, depth)        
+	nM = M/sum(sum(M))
+	Mzss = M
+	logging.info("Computing UED matrix; may take long (up to {} minutes)".format(args.minutes))
+	M, nodes, indices = qf.qastar.qastar_dist_matrix(G, depth, Msubs=Mzss, max_milliseconds=1000*60*args.minutes, zero=ccdl)       
+	nM = M/sum(sum(M))
+	logging.info("Clustering")
+	c, _M, nodes, indices = qf.qastar.agclust_optcl(G, depth, min(4, n), ccdln, nM, nodes, indices, linkage_type=linkage_type)
+	bestc = qf.qastar.agclust2dict(c, _M, nodes, indices)
+	bestcn = len(set(bestc.values()))
+	bestcnmi = qf.util.nmi(gt, bestc)
+	description="Agglomerative UED (linkage={})".format(linkage_type)
+	results[description]=(bestcn,bestcnmi)
+else:
+	logging.info("Reading colour file {} instead of computing a colour".format(args.colour))
+	logging.info("Skip headers? {}".format(args.colour_skip_header))
+	bestc = qf.util.read_label(args.colour, skipHeader=args.colour_skip_header, separator=args.colour_separator)
+	logging.info("Colours are: {}".format(bestc))
+	bestcn = len(set(bestc.values()))
+	bestcnmi = qf.util.nmi(gt, bestc)
+	description="Provided colour".format(args.colour)
+	results[description]=(bestcn,bestcnmi)
+
 # Completion
 logging.info("Building quasi-fibration and repairing")
 B, xi = qf.morph.qf_build(G, bestc, verbose=False)
@@ -199,6 +216,10 @@ qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", a
 logging.info("Writing clustering information")
 with open(args.output_basename + "-clusters.tsv", "w") as txt:
     txt.write("# Every line contains: node, ground-truth cluster (=Cardon-Crochemore, if unavailable), Cardon-Crochemore cluster, Agglomerative Clustering cluster, Reduced aggl. cluster\n")
+    logging.info("gt={}".format(gt))
+    logging.info("cc={}".format(cc))
+    logging.info("bestc={}".format(bestc))
+    logging.info("gt={}".format(ccp))
     for node in G.nodes:
         txt.write("{}\t{}\t{}\t{}\t{}\n".format(node, gt[node], cc[node], bestc[node], ccp[node]))
 
@@ -232,7 +253,7 @@ with open(args.output_basename + "-data.txt", "w") as txt:
         txt.write("{:40}\t{:.5}\t\t{:2}\n".format(k, results[k][1], results[k][0]))
 
 with open(args.output_basename + "-README.txt", "w") as txt:
-    txt.write("TEXT FILES\n")
+    txt.write("TEXT FILES (if colour is provided, the colour is used instead of aggl.)\n")
     txt.write(" - {}-README.txt: this file\n".format(args.output_basename))
     txt.write(" - {}-data.txt: general report\n".format(args.output_basename))
     txt.write(" - {}-cc-vs-gt.txt: symmetric difference between the arcs of Cardon-Crochemore and those required by the Ground truth\n".format(args.output_basename))
