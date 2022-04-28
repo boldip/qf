@@ -355,7 +355,7 @@ def repair(f, G, B, seed=0, verbose=False):
                     del fp[a_to_remove]
     return (Gp, fp)
 
-def qf_build(G, c, verbose=False):
+def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
     """
         This is the implementation of QFBuild. Given an equivalence relation c on the nodes of G (represented as a dict: the keys are nodes and two
         nodes are equivalent iff they have the same value), build a graph B and a morphism f: G->B with the following properties:
@@ -392,7 +392,12 @@ def qf_build(G, c, verbose=False):
                 v.append(count)
             if sum(v) == 0:
                 continue
-            k = max(int(statistics.median(v)), 1) #WHY MAX
+            if add_only:
+                k = max(max(v), 1)
+            elif remove_only:
+                k = max(min(v), 1)
+            else:
+                k = max(int(statistics.median(v)), 1) #WHY MAX
             if verbose:
                 print("{} -> {}: {} median {}".format(source_klass, target_klass, v, k))
             arc_label = []

@@ -83,9 +83,16 @@ argparser.add_argument("--katz", action="store_true",
                        help="Order children in trees using Katz centrality")
 argparser.add_argument("--minutes", type=int, default=60,
                        help="Maximum number of minutes for the computation of the UTD matrix")
+argparser.add_argument("--remove_only", action="store_true",
+                       help="Only remove arcs (never add them)")
+argparser.add_argument("--add_only", action="store_true",
+                       help="Only add arcs (never remove them)")
 args = argparser.parse_args() 
     
 ## Read file
+
+if args.add_only and args.remove_only:
+    argparser.error("You cannot specify both --remove_only and --add_only")
 
 if args.graph_filename.startswith(":"):
     logging.info("Creating synthetic graph")
@@ -186,7 +193,7 @@ else:
 
 # Completion
 logging.info("Building quasi-fibration and repairing")
-B, xi = qf.morph.qf_build(G, bestc, verbose=False)
+B, xi = qf.morph.qf_build(G, bestc, add_only=args.add_only, remove_only=args.remove_only, verbose=False)
 excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=False)
 logging.info("Excess / deficiency / total error: {} / {} / {}".format(excess, deficiency, excess + deficiency))
 logging.info("Repairing graph")
