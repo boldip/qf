@@ -283,6 +283,12 @@ def excess_deficiency(f, G, B, verbose=False):
                 if verbose and len(ts)>1:
                     print("EXCESS: lifting arc {} at {} gives {} excess results".format(a, x, len(ts) - 1))
                 excess += len(ts) - 1
+    for a in arcs(G):
+        if f[a] == "NONE":
+            if verbose:
+                print("EXCESS: cannot map arc {}".format(a))
+            excess += 1
+
     return (excess, deficiency)
 
 def is_fibration(f, G, B):
@@ -353,6 +359,13 @@ def repair(f, G, B, seed=0, verbose=False):
                         print("Removing arc {}: {} -> {}".format(a_to_remove, xr, yr))
                     Gp.remove_edge(xr,yr,key=kr)
                     del fp[a_to_remove]
+    for a in arcs(G):
+        if f[a] == "NONE":
+            xr, yr, kr = get_arc(Gp, a)
+            if verbose:
+                print("Removing arc {}: {} -> {}".format(a, xr, yr))
+                Gp.remove_edge(xr,yr,key=kr)
+                del fp[a] 
     return (Gp, fp)
 
 def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
@@ -393,9 +406,9 @@ def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
             if sum(v) == 0:
                 continue
             if add_only:
-                k = max(max(v), 1)
+                k = max(max(v), 0)
             elif remove_only:
-                k = max(min(v), 1)
+                k = max(min(v), 0)
             else:
                 k = max(int(statistics.median(v)), 1) #WHY MAX
             if verbose:
@@ -412,7 +425,10 @@ def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
                 count = 0
                 for s,t,a in G.edges(data=True):
                     if t == y and c[s] == source_klass:
-                        f[a["label"]] = arc_label[count % len(arc_label)]
+                        if len(arc_label) == 0:
+                            f[a["label"]] = "NONE"
+                        else:
+                            f[a["label"]] = arc_label[count % len(arc_label)]
                         count += 1
     return (B, f)
 
