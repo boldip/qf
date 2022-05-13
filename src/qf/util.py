@@ -26,6 +26,7 @@ from queue import Queue
 
 import logging
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from networkx.drawing.nx_agraph import write_dot
@@ -78,7 +79,7 @@ def jaccard_multiset(x, y):
     return num / den
 
 
-def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinates=None, scale=10):
+def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinates=None, scale=10, symmetrize=False):
     """
         Reads a graph from the given file, possibly skipping the first line (a.k.a. header). If not dense, every line is a `separator`-separated pair of node
         names, each corresponding to an arc. If dense, the header lines contains a first special value (ignored), the separator, and then `separator`-separated target names:
@@ -96,6 +97,7 @@ def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinat
             dense (bool): whether the format is dense or not (see above).
             coordinates (dict): either `None`, or a dict whose keys are the nodes and whose values are tuples of two numbers each, representing the coordinates.
             scale (float): each coordinate is multiplied by this factor (see above).
+            symmetrize (bool): whether the arcs should be symmetrized.
 
         Returns:
             a `networkx.MultiDiGraph` as described above.
@@ -117,12 +119,16 @@ def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinat
                 if int(v[i]) > 0 and targets[i - 1] != source:
                     for times in range(int(v[i])):
                         G.add_edge(source, targets[i - 1], label="(%s -> %s)" % (source, targets[i - 1]))
+                        if symmetrize:
+                            G.add_edge(targets[i - 1], source, label="(%s -> %s)" % (targets[i - 1], source))
         else:
             if line.strip() == '':
                 continue
             v = line.strip().split(separator)
             if v[0] != v[1]:
                 G.add_edge(v[0], v[1], label="(%s -> %s)" % (v[0], v[1]))
+                if symmetrize:
+                    G.add_edge(v[1], v[0], label="(%s -> %s)" % (v[1], v[0]))
     f.close()
     if coordinates is not None:
         t={}

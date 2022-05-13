@@ -67,6 +67,8 @@ argparser.add_argument("--graph_separator", type=str, default="\t",
                        help="Separator used in graph file")
 argparser.add_argument("--graph_is_dense", action="store_true",
                        help="Whether the graph is specified in the dense format")
+argparser.add_argument("--symmetrize_graph", action="store_true",
+                       help="Whether the graph should be symmetrized (i.e., all arcs specified are)")
 argparser.add_argument("--coord_skip_header", action="store_true",
                        help="Skip headers while reading coord file")
 argparser.add_argument("--coord_separator", type=str, default=" ",
@@ -126,7 +128,7 @@ else:
     coords = None
     if args.coord is not None:
         coords = qf.util.read_coordinates(args.coord, skipHeader=args.coord_skip_header, separator=args.coord_separator)    
-    G = qf.util.read_graph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense, coordinates=coords)
+    G = qf.util.read_graph(args.graph_filename, skipHeader=args.graph_skip_header, separator=args.graph_separator, dense=args.graph_is_dense, coordinates=coords, symmetrize = args.symmetrize_graph)
     if args.ground is None:
         raise Exception("No ground truth available for real graph")
     else:

@@ -26,6 +26,7 @@ from collections import Counter
 
 import matplotlib as mpl
 import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from IPython.display import Image
@@ -34,7 +35,7 @@ from networkx.drawing.nx_agraph import write_dot
 from sklearn.cluster import DBSCAN
 
 from qf.util import indexify
-
+from qf.util import time_limit, TimeoutException
 
 def add_edges_with_name(G, triples):
     """
@@ -69,7 +70,7 @@ def remove_edges_with_name(G, set_of_names):
         G.remove_edge(x[0], x[1], x[2])
 
 
-def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True):
+def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=0.1):
     """
         It writes out a graph in dot and png format, on two given files.
 
@@ -80,6 +81,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
         - If nodes has a `pos` attribute, or `labelArcs` is False, all "label" edge attributes are removed.
         - If `labelNodes` is False, all "label" node attributes are set to "".
         - The rendering for png is performed using `dot` or `fdp` depending on whether nodes have a `pos` attribute or not. 
+        After a timeout of the given number of seconds, we use native networkx drawing instead.
 
         Args:
             GG: a `nerworkx.MultiDiGraph`; edges should all possess a `label` attribute.
@@ -119,14 +121,27 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
     fdpCommand = "fdp -Goverlap=scale -Tpng -Gsplines=true {} -o {}".format(dot_filename, png_filename)
     dotCommand = "dot -T png {} -o {}".format(dot_filename, png_filename)
 
-    if len(nx.get_node_attributes(G, "pos")) > 0:
-        result = os.system(fdpCommand)
-        if(result != 0):
-            logging.error("Error executing command {}".format(fdpCommand))
-    else:
-        result = os.system(dotCommand)
-        if(result != 0):
-            logging.error("Error executing command {}".format(dotCommand))
+    try:
+        with time_limit(timeout):
+            if len(nx.get_node_attributes(G, "pos")) > 0:
+                result = os.system(fdpCommand)
+                if(result != 0):
+                    logging.error("Error executing command {}".format(fdpCommand))
+            else:
+                result = os.system(dotCommand)
+                if(result != 0):
+                    logging.error("Error executing command {}".format(dotCommand))
+    except TimeoutException:
+        logging.warning("Could not use fdp/dot --- resorting to nx")
+        node_list=list(G.nodes())
+        node_color=[colindex_to_rgb[node_to_colindex[x]] for x in node_list]
+        node_pos={k:(float(v.split(",")[0]),float(v.split(",")[1][:-1])) for k,v in nx.get_node_attributes(G, "pos").items()}
+        fig = plt.figure(figsize=(10,10))
+        if len(nx.get_node_attributes(G, "pos")) > 0:
+            nx.draw(G, with_labels=True, nodelist=node_list, node_color=node_color, pos=node_pos, node_size=500)
+        else:
+            nx.draw(G, with_labels=True, nodelist=node_list, node_color=node_color)
+        plt.savefig(png_filename, format="PNG")        
 
 def visualize(G, colors=None, labelNodes=True, labelArcs=True):
     """
@@ -298,6 +313,7 @@ def difference(G, H):
             A multidigraph as described above.
     """
     GG = nx.MultiDiGraph()
+    GG.add_nodes_from(G.nodes(data=True))
     for x,y in G.edges():
         if not H.has_edge(x,y):
             GG.add_edge(x, y, label="+ {}->{}".format(x,y))
