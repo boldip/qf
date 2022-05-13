@@ -410,7 +410,7 @@ def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
             elif remove_only:
                 k = max(min(v), 0)
             else:
-                k = max(int(statistics.median(v)), 1) #WHY MAX
+                k = int(statistics.median(v)) #WHY MAX
             if verbose:
                 print("{} -> {}: {} median {}".format(source_klass, target_klass, v, k))
             arc_label = []
