@@ -70,7 +70,7 @@ def remove_edges_with_name(G, set_of_names):
         G.remove_edge(x[0], x[1], x[2])
 
 
-def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=1, scale=1):
+def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1):
     """
         It writes out a graph in dot and png format, on two given files.
 
@@ -90,6 +90,9 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
             colors (dict): if not None, a dictionary from nodes to values (same value mean same color).
             labelNodes (bool): whether labels should appear on nodes (the actual node name).
             labelArcs (bool): whether labels should appear on arcs (the "label" attribute on edges).
+            labelWeight (bool): whether arc labels should include weights
+            timeout (float): after this number of seconds, dot/fdp are not used anymore but we resort to nx.
+            scale (float): scale the position (if smaller than 1, makes the plot smaller).
     """
     G = GG.copy()
     if colors != None:
@@ -115,8 +118,15 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
                 x = float(v.split(",")[0]) * scale
                 y = float(v.split(",")[1][:-1]) * scale
                 d["pos"]="{},{}!".format(x, y)
-    if not labelArcs:
-        for s,t,d in G.edges(data=True):
+    for s,t,d in G.edges(data=True):
+        tt = ""
+        if labelArcs and "label" in d:
+            tt = d["label"] + " "
+        if labelWeight and "weight" in d:
+            tt += "{}".format(d["weight"])
+        if tt:
+            d["label"] = tt
+        else:
             if "label" in d:
                 del d["label"]
     if not labelNodes:
@@ -151,7 +161,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
             nx.draw(G, with_labels=True, nodelist=node_list, node_color=node_color)
         plt.savefig(png_filename, format="PNG")        
 
-def visualize(G, colors=None, labelNodes=True, labelArcs=True, scale=1):
+def visualize(G, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1):
     """
         Returns an image for the given graph. 
 
@@ -171,7 +181,7 @@ def visualize(G, colors=None, labelNodes=True, labelArcs=True, scale=1):
     """
     dot_filename = tempfile.NamedTemporaryFile(suffix=".dot").name
     png_filename = tempfile.NamedTemporaryFile(suffix=".png").name
-    _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs, scale=scale)
+    _visualize(G, dot_filename, png_filename, colors, labelNodes=labelNodes, labelArcs=labelArcs, labelWeight=labelWeight, scale=scale)
     if(os.path.isfile(png_filename)):
         return Image(filename=png_filename)
     else:
