@@ -161,7 +161,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
             nx.draw(G, with_labels=True, nodelist=node_list, node_color=node_color)
         plt.savefig(png_filename, format="PNG")        
 
-def visualize(G, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1):
+def visualize(G, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1, useplt=False):
     """
         Returns an image for the given graph. 
 
@@ -183,7 +183,10 @@ def visualize(G, colors=None, labelNodes=True, labelArcs=True, labelWeight=True,
     png_filename = tempfile.NamedTemporaryFile(suffix=".png").name
     _visualize(G, dot_filename, png_filename, colors, labelNodes=labelNodes, labelArcs=labelArcs, labelWeight=labelWeight, scale=scale)
     if(os.path.isfile(png_filename)):
-        return Image(filename=png_filename)
+        if useplt:
+            return plt.imread(png_filename)
+        else:
+            return Image(filename=png_filename)
     else:
         logging.error("{} has not been created".format(png_filename))
 
