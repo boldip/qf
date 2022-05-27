@@ -49,6 +49,7 @@ def indexify(m):
             the resulting dictionary.
     """
     values=list(set([str(v) for v in m.values()]))
+    values.sort()
     return {k: values.index(str(m[k])) for k in m.keys()}
 
 

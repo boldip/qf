@@ -70,7 +70,7 @@ def remove_edges_with_name(G, set_of_names):
         G.remove_edge(x[0], x[1], x[2])
 
 
-def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=1):
+def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=1, scale=1):
     """
         It writes out a graph in dot and png format, on two given files.
 
@@ -110,6 +110,11 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
             d["width"]=0.3            
             d["fixedsize"]=True
             d["esep"]=0
+            if scale != 1:
+                v = d["pos"]
+                x = float(v.split(",")[0]) * scale
+                y = float(v.split(",")[1][:-1]) * scale
+                d["pos"]="{},{}!".format(x, y)
     if not labelArcs:
         for s,t,d in G.edges(data=True):
             if "label" in d:
@@ -146,7 +151,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
             nx.draw(G, with_labels=True, nodelist=node_list, node_color=node_color)
         plt.savefig(png_filename, format="PNG")        
 
-def visualize(G, colors=None, labelNodes=True, labelArcs=True):
+def visualize(G, colors=None, labelNodes=True, labelArcs=True, scale=1):
     """
         Returns an image for the given graph. 
 
@@ -166,7 +171,7 @@ def visualize(G, colors=None, labelNodes=True, labelArcs=True):
     """
     dot_filename = tempfile.NamedTemporaryFile(suffix=".dot").name
     png_filename = tempfile.NamedTemporaryFile(suffix=".png").name
-    _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs)
+    _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs, scale=scale)
     if(os.path.isfile(png_filename)):
         return Image(filename=png_filename)
     else:
