@@ -70,7 +70,7 @@ def remove_edges_with_name(G, set_of_names):
         G.remove_edge(x[0], x[1], x[2])
 
 
-def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=0.1):
+def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, timeout=1):
     """
         It writes out a graph in dot and png format, on two given files.
 
@@ -134,7 +134,10 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
     except TimeoutException:
         logging.warning("Could not use fdp/dot --- resorting to nx")
         node_list=list(G.nodes())
-        node_color=[colindex_to_rgb[node_to_colindex[x]] for x in node_list]
+        if colors != None:
+            node_color=[colindex_to_rgb[node_to_colindex[x]] for x in node_list]
+        else:
+            node_color=None
         node_pos={k:(float(v.split(",")[0]),float(v.split(",")[1][:-1])) for k,v in nx.get_node_attributes(G, "pos").items()}
         fig = plt.figure(figsize=(10,10))
         if len(nx.get_node_attributes(G, "pos")) > 0:
@@ -321,3 +324,22 @@ def difference(G, H):
         if not G.has_edge(x,y):
             GG.add_edge(x, y, label="- {}->{}".format(x,y), style="dotted")
     return GG
+
+def multiplex(G, theta=1):
+    """
+        Given a graph with weights on its arcs, it returns a new graph where each of the original arcs
+        is multiplexed (i.e., repeated) a number of times equal to its weight divided by theta and then truncated.
+
+        Args:
+            G: a multidigraph `networkx.MultiDiGraph`.
+
+        Returns:
+            A multidigraph as described above.
+    """
+    MG=nx.MultiDiGraph()
+    for x, d in G.nodes(data=True):
+        MG.add_node(x, **d)
+    for s, t, d in G.edges(data=True):
+        for i in range(int(d["weight"] / theta)):
+            MG.add_edge(s, t, label="%s[%d]".format(d["label"], i))
+    return MG

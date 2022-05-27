@@ -128,9 +128,9 @@ def read_graph(filename, skipHeader=True, separator="\t", dense=False, coordinat
             v = line.strip().split(separator)
             if v[0] != v[1]:
                 if weights:
-                    G.add_edge(v[0], v[1], label="(%s -> %s)" % (v[0], v[1]), {"weight": float(v[2])})
+                    G.add_edge(v[0], v[1], label="(%s -> %s)" % (v[0], v[1]), weight=float(v[2]))
                     if symmetrize:
-                        G.add_edge(v[1], v[0], label="(%s -> %s)" % (v[1], v[0]), {"weight": float(v[2])})
+                        G.add_edge(v[1], v[0], label="(%s -> %s)" % (v[1], v[0]), weight=float(v[2]))
                 else:
                     G.add_edge(v[0], v[1], label="(%s -> %s)" % (v[0], v[1]))
                     if symmetrize:
