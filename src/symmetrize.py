@@ -199,7 +199,7 @@ B, xi = qf.morph.qf_build(G, bestc, add_only=args.add_only, remove_only=args.rem
 excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=False)
 logging.info("Excess / deficiency / total error: {} / {} / {}".format(excess, deficiency, excess + deficiency))
 logging.info("Repairing graph")
-Gp, xip = qf.morph.repair(xi, G, B, verbose=True)
+Gp, xip = qf.morph.repair(xi, G, B, verbose=False)
 
 # Final minimum base
 ccp = qf.cc.cardon_crochemore(Gp)
