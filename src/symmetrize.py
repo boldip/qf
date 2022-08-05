@@ -87,6 +87,8 @@ argparser.add_argument("--remove_only", action="store_true",
                        help="Only remove arcs (never add them)")
 argparser.add_argument("--add_only", action="store_true",
                        help="Only add arcs (never remove them)")
+argparser.add_argument("--usenx", action="store_true",
+                       help="Use only networkx to render graphs")
 args = argparser.parse_args() 
     
 ## Read file
@@ -208,16 +210,16 @@ results["Final"]=(ccpn,ccpnmi)
 
 # Save graph files
 logging.info("Writing dot/png files")
-qf.graphs.save(G, args.output_basename + "-orig-gt.dot", args.output_basename + "-orig-gt.png", colors=gt)
-qf.graphs.save(G, args.output_basename + "-orig-cc.dot", args.output_basename + "-orig-cc.png", colors=cc)
-qf.graphs.save(G, args.output_basename + "-orig-aggl.dot", args.output_basename + "-orig-aggl.png", colors=bestc)
-qf.graphs.save(G, args.output_basename + "-orig-reduced.dot", args.output_basename + "-orig-reduced.png", colors=ccp)
-qf.graphs.save(Gp, args.output_basename + "-repaired.dot", args.output_basename + "-repaired.png", colors=ccp)
+qf.graphs.save(G, args.output_basename + "-orig-gt.dot", args.output_basename + "-orig-gt.png", colors=gt, useNx=args.useNx)
+qf.graphs.save(G, args.output_basename + "-orig-cc.dot", args.output_basename + "-orig-cc.png", colors=cc, useNx=args.useNx)
+qf.graphs.save(G, args.output_basename + "-orig-aggl.dot", args.output_basename + "-orig-aggl.png", colors=bestc, useNx=args.useNx)
+qf.graphs.save(G, args.output_basename + "-orig-reduced.dot", args.output_basename + "-orig-reduced.png", colors=ccp, useNx=args.useNx)
+qf.graphs.save(Gp, args.output_basename + "-repaired.dot", args.output_basename + "-repaired.png", colors=ccp, useNx=args.useNx)
 
 # Compute and save difference
 Gdif = qf.graphs.difference(Gp, G)
-qf.graphs.save(Gdif, args.output_basename + "-diff.dot", args.output_basename + "-diff.png", colors=ccp, labelNodes=True, labelArcs=False)
-qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", args.output_basename + "-base.png", colors=ccp, labelNodes=False, labelArcs=False)
+qf.graphs.save(Gdif, args.output_basename + "-diff.dot", args.output_basename + "-diff.png", colors=ccp, labelNodes=True, labelArcs=False, useNx=args.useNx)                                                                                                                                          , useNx=args.useNx
+qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", args.output_basename + "-base.png", colors=ccp, labelNodes=False, labelArcs=False, useNx=args.useNx)
 
 # Clusters
 logging.info("Writing clustering information")
