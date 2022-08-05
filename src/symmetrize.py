@@ -87,7 +87,7 @@ argparser.add_argument("--remove_only", action="store_true",
                        help="Only remove arcs (never add them)")
 argparser.add_argument("--add_only", action="store_true",
                        help="Only add arcs (never remove them)")
-argparser.add_argument("--usenx", action="store_true",
+argparser.add_argument("--useNx", action="store_true",
                        help="Use only networkx to render graphs")
 args = argparser.parse_args() 
     
