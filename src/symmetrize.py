@@ -218,7 +218,7 @@ qf.graphs.save(Gp, args.output_basename + "-repaired.dot", args.output_basename 
 
 # Compute and save difference
 Gdif = qf.graphs.difference(Gp, G)
-qf.graphs.save(Gdif, args.output_basename + "-diff.dot", args.output_basename + "-diff.png", colors=ccp, labelNodes=True, labelArcs=False, useNx=args.useNx)                                                                                                                                          , useNx=args.useNx
+qf.graphs.save(Gdif, args.output_basename + "-diff.dot", args.output_basename + "-diff.png", colors=ccp, labelNodes=True, labelArcs=False, useNx=args.useNx)                                                                                                                                          
 qf.graphs.save(qf.graphs.to_simple(Gphat), args.output_basename + "-base.dot", args.output_basename + "-base.png", colors=ccp, labelNodes=False, labelArcs=False, useNx=args.useNx)
 
 # Clusters
