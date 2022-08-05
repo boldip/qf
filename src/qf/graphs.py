@@ -224,7 +224,7 @@ def save(G, dot_filename=None, png_filename=None, colors=None, labelNodes=True, 
         dot_filename = tempfile.NamedTemporaryFile(suffix=".dot").name
     if png_filename is None:
         png_filename = tempfile.NamedTemporaryFile(suffix=".png").name
-    _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs)
+    _visualize(G, dot_filename, png_filename, colors, labelNodes, labelArcs, useNx)
     return (dot_filename, png_filename)
 
 def lift(G, fibre):
