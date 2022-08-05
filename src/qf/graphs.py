@@ -70,7 +70,7 @@ def remove_edges_with_name(G, set_of_names):
         G.remove_edge(x[0], x[1], x[2])
 
 
-def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1):
+def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, labelArcs=True, labelWeight=True, timeout=1, scale=1, useNx=False):
     """
         It writes out a graph in dot and png format, on two given files.
 
@@ -137,6 +137,8 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
     dotCommand = "dot -T png {} -o {}".format(dot_filename, png_filename)
 
     try:
+        if useNx:
+            raise TimeoutException
         with time_limit(timeout):
             if len(nx.get_node_attributes(G, "pos")) > 0:
                 result = os.system(fdpCommand)
