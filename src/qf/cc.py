@@ -32,7 +32,7 @@ from sklearn.cluster import DBSCAN
 from qf.util import indexify
 
 
-def cardon_crochemore(G, max_step=-1):
+def cardon_crochemore(G, max_step=-1, starting_label=None):
     """
         Computes and returns the coarsest equitable partition of the nodes of the graph G.
         If `max_step` is not negative, the computation is stopped prematurely after that number of iterations.
@@ -40,6 +40,7 @@ def cardon_crochemore(G, max_step=-1):
         Args:
             G: a `networkx.MultiDiGraph`.
             max_step (int): the maximum number of iterations, or -1 to stop only after `G.number_of_nodes()` steps.
+            starting_label (dict): if set, it is a dictionary with one entry per node, used to initialize the labels.
 
         Returns:
             a dictionary with the nodes of `G` as keys, and with values in `range(k)` where `k` is the number of
@@ -47,7 +48,10 @@ def cardon_crochemore(G, max_step=-1):
     """
     if max_step < 0:
         max_step = len(G.nodes)
-    label={x:0 for x in G.nodes}
+    if starting_label is None:
+        label={x:0 for x in G.nodes}
+    else:
+        label=starting_label
     n=len(set(label.values()))
     i = 0
     while True:

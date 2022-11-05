@@ -366,3 +366,22 @@ def multiplex(G, theta=1):
         for i in range(int(d["weight"] / theta)):
             MG.add_edge(s, t, label="%s[%d]".format(d["label"], i))
     return MG
+
+
+def distinct_source(G):
+    """
+        Given a graph returns a colouring of its nodes where all nodes with no incoming arcs have distinct labels, and all the remaining nodes have the same label.
+
+        Args:
+            G: a multidigraph `networkx.MultiDiGraph`.
+
+        Returns:
+            A dictionary as described above.
+    """
+    d = {}
+    for x in G.nodes():
+        if G.in_degree(x) == 0:
+            d[x] = x
+        else:
+            d[x] = -1
+    return d
