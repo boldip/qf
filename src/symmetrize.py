@@ -197,11 +197,11 @@ else:
 
 # Completion
 logging.info("Building quasi-fibration and repairing")
-B, xi = qf.morph.qf_build(G, bestc, add_only=args.add_only, remove_only=args.remove_only, verbose=False)
-excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=False)
+B, xi = qf.morph.qf_build(G, bestc, add_only=args.add_only, remove_only=args.remove_only, verbose=True)
+excess, deficiency = qf.morph.excess_deficiency(xi, G, B, verbose=True)
 logging.info("Excess / deficiency / total error: {} / {} / {}".format(excess, deficiency, excess + deficiency))
 logging.info("Repairing graph")
-Gp, xip = qf.morph.repair(xi, G, B, verbose=False)
+Gp, xip = qf.morph.repair(xi, G, B, verbose=True)
 
 # Final minimum base
 ccp = qf.cc.cardon_crochemore(Gp)

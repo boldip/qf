@@ -397,11 +397,15 @@ def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
     for target_klass in classes:
         for source_klass in classes:
             v = []
+            verbose_v = []
             for y in [x for x in G.nodes if c[x]==target_klass]:
                 count = 0
+                verbose_set = []
                 for s,t,a in G.edges(data=True):
                     if t == y and c[s] == source_klass:
                         count += 1
+                        verbose_set.append((s,t))
+                verbose_v.append(verbose_set)
                 v.append(count)
             if sum(v) == 0:
                 continue
@@ -412,7 +416,7 @@ def qf_build(G, c, remove_only=False, add_only=False, verbose=False):
             else:
                 k = int(statistics.median(v)) #WHY MAX
             if verbose:
-                print("{} -> {}: {} median {}".format(source_klass, target_klass, v, k))
+                print("{} -> {}: {} median {} [{}]".format(source_klass, target_klass, v, k, verbose_v))
             arc_label = []
             for i in range(k):
                 arc_label.append("{}_{}_{}".format(source_klass, target_klass, i))
