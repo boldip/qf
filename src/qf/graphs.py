@@ -132,7 +132,7 @@ def _visualize(GG, dot_filename, png_filename, colors=None, labelNodes=True, lab
                 del d["label"]
     if not labelNodes:
         nx.set_node_attributes(G, {x: "" for x in G.nodes}, "label")       
-    nx.nx_pydot.write_dot(G, dot_filename)
+    nx.nx_agraph.write_dot(G, dot_filename)
 
     fdpCommand = "fdp -Goverlap=scale -Tpng -Gsplines=true {} -o {}".format(dot_filename, png_filename)
     dotCommand = "dot -T png {} -o {}".format(dot_filename, png_filename)
