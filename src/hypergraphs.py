@@ -237,68 +237,7 @@ def read_hg_from_S(filename):
     return H
 
 
-def read_hg_from_SBML(filename):
-    """
-        Reads an SBML file into a hypergraph. This hypergraph contains one group of hyperarcs for every reaction,
-        where reactants are the sources, and product(s) are the target(s). If there is more than one product,
-        many hyperarcs are added, and their names are of the form "R_k" where "R" is the reaction id and
-        "k" is the number identifying the subreaction so generated.
-        
-        Args:
-            filename: the name of the file to be read.
-            
-        Returns:
-            H: the hypergraph.
-            sr2r: a dictionary that maps hyperarc names to reactions (i.e., reaction ids): for reactions R with just product, the 
-                dictonary will contain a key equal to R, with associated value also equal to R; for
-                reactions with n products, the dictionary will contain keys R_0,R_1,... and value R.
-            r2ss: a dictionary that maps reactions to subsystems.
-            rid2rname: a dictionary mapping reaction ids to reaction names.
-            mid2mname: a dictionary mapping metabolites (i.e., species, in the SBML jargon) id to metabolites names.
-    """
-
-    H = hnx.Hypergraph()
-    r2ss = {}
-    sr2r = {}
-    rid2rname = {}
-    mid2mname = {}
-    document = libsbml.readSBMLFromFile(filename)
-    model = document.getModel()
-    for species in model.getListOfSpecies():
-        mid2mname[species.id] = species.name
-    for i in range(model.getNumReactions()):
-        reaction = model.getReaction(i)
-        reactionId = reaction.id
-        rid2rname[reactionId] = reaction.name
-        notes = reaction.getNotes()
-        numNotes = notes.getNumChildren()
-        for nn in range(numNotes):
-            if notes.getChild(nn).getChild(0).toString().startswith("SUBSYSTEM:"):
-                r2ss[reactionId] = notes.getChild(nn).getChild(0).toString().split(": ")[1]
-        reactantsIds = [p.species for p in reaction.getListOfReactants()]
-        productsIds = [p.species for p in reaction.getListOfProducts()]
-        numProducts = len(productsIds)
-        numReactants = len(reactantsIds)
-        if numProducts > 1:
-            for np, product in enumerate(productsIds):
-                add_directed_hyperedge(H, reactantsIds, product, reactionId + "_" + str(np))
-                sr2r[reactionId + "_" + str(np)] = reactionId
-        elif numProducts == 1:
-            add_directed_hyperedge(H, reactantsIds, productsIds[0], reactionId)
-            sr2r[reactionId] = reactionId
-        else:
-            print("Ignoring reaction ", reactionId, " because it has no products")
-        if reaction.reversible:
-            if numReactants > 1:
-                for nr, reactant in enumerate(reactantsIds):
-                    add_directed_hyperedge(H, productsIds, reactant, reactionId + "_R" + str(nr))
-                    sr2r[reactionId + "_R" + str(nr)] = reactionId
-            elif numReactants == 1:
-                sr2r[reactionId + "_R"] = reactionId
-                add_directed_hyperedge(H, productsIds, reactantsIds[0], reactionId + "_R")
-    return H, sr2r, r2ss, rid2rname, mid2mname
-
-def read_hg_from_SBMLs(filenames):
+def read_hg_from_SBML(filenames):
     """
         Reads a (set of SBML) file(s) into a hypergraph. This hypergraph contains one group of hyperarcs for every reaction,
         where reactants are the sources, and product(s) are the target(s). If there is more than one product,
