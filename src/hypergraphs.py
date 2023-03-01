@@ -305,9 +305,9 @@ def read_hg_from_SBML(filenames):
     return H, sr2r, r2ss, rid2rname, mid2mname
 
 
-def showMapKeys(m, onlyNonTrivial = True, keyadj = None, keydesc = None, prefOnly = "", keyfamily = None):
+def mapKeys(m, onlyNonTrivial = True, keyadj = None, keydesc = None, prefOnly = "", keyfamily = None):
     """
-        Shows (prints) the keys of a dictionary, grouped by value. 
+        Returns a list of the keys of a dictionary, grouped by value. 
         
         Args:
             m: the dictionary whose keys must be shown.
@@ -318,6 +318,7 @@ def showMapKeys(m, onlyNonTrivial = True, keyadj = None, keydesc = None, prefOnl
             keyfamily: if set, after each group of keys a group of families is also shown, containing the families of
                 the elements of the group (each family is obtained applying this dictionary to each key)
     """
+    result = []
     for v in set(m.values()):
         if keyadj is not None:
             eqClass = set([keyadj[k] for k,w in m.items() if w==v and k.startswith(prefOnly)])
@@ -326,13 +327,14 @@ def showMapKeys(m, onlyNonTrivial = True, keyadj = None, keydesc = None, prefOnl
         if onlyNonTrivial and len(eqClass) <= 1:
             continue
         if keydesc is not None:
-            out = set(["{} ({})".format(k, keydesc[k]) for k in eqClass])
+            out = set([(k, keydesc[k]) for k in eqClass])
         else:
-            out = set(["{}".format(k) for k in eqClass])
+            out = set(eqClass)
         if keyfamily is not None and eqClass.issubset(keyfamily.keys()):
-            print(out, "->", set([keyfamily[k] for k in eqClass]))
+            result += [(out, set([keyfamily[k] for k in eqClass]))]
         else:
-            print(out)
+            result += [out]
+    return result
 
 
 
