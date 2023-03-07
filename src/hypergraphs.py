@@ -44,30 +44,55 @@ def add_directed_hyperedges(H, stpairs):
         else:
             add_directed_hyperedge(H, st[0], st[1], name=st[2])
 
-def hg2g(H):
+def hg2g(H, proxy=None, proxyPrefix="prx_"):
     """
     Returns the RB-graph representation of a hypergraph.
     
     Args:
         H: a `hypernetx.Hypergraph`, all of whose hyperedges contain a target propery, that contains the target node.
+            Names of all nodes are the uid's of nodes and hyperedges in the hypergraph.
+        proxy: if present, it is a dictionary with one key per hyperedge of H; it will add one extra node (nicknamed "proxy node") for
+            every value of proxy, and this node will have an incoming arc from every node corresponding to a hyperedge
+            that is mapped to that value. For instance, is proxy['rnFOO_R0']='rnFOO', then a proxy node 'rnFOO'
+            will be added, and it will have an incoming arc from 'rnFOO_R0' (and all other keys with value 'rnFOO').
+        proxyPrefix: only meaningful if `proxy` is not None. In this case nodes corresponding to hypearcs are named
+            as proxyPrefix + uid, whereas proxy nodes are named with the value they have. In the example above,
+            the node of H with uid='rnFOO_R0' will be represented by a node in the graph named 'prx_rnFOO_R0', 
+            whereas the proxy node will be actually named 'rnFOO'.
         
     Returns:
         - the graph.
         - a dictionary mapping the nodes of the returned graph to 0 (blue nodes, i.e., nodes of H) or to 1 (red nodes, i.e., hyperarcs of H).
+          If there is a proxy, there will also be keys mapped to 2, one for each proxy node.
     """
     G = nx.MultiDiGraph()
     G.add_nodes_from([x.uid for x in H.nodes()])
-    G.add_nodes_from([x.uid for x in H.edges()])
     dd1 = {x.uid: 0 for x in H.nodes()} # Blue nodes
-    dd2 = {x.uid: 1 for x in H.edges()} # Red nodes
-    dd = {**dd1, **dd2}
+    if proxy is None:    
+        G.add_nodes_from([x.uid for x in H.edges()])
+        dd2 = {x.uid: 1 for x in H.edges()} # Red nodes
+        dd = {**dd1, **dd2}
+    else:
+        G.add_nodes_from([proxyPrefix + x.uid for x in H.edges()])
+        dd2 = {proxyPrefix + x.uid: 1 for x in H.edges()} # Red nodes
+        G.add_nodes_from([x for x in set(proxy.values())])
+        dd3 = {x: 2 for x in set(proxy.values())} # White proxy nodes
+        for x in H.edges():
+            G.add_edge(proxyPrefix + x.uid, proxy[x.uid], label='(proxy %s)' % x.uid)
+        dd = {**dd1, **dd2, **dd3}
     for h in H.edges():
         target = h.props['target']
         for i,e in enumerate(h.elements):
             if e != target:
-                G.add_edge(e, h.uid, label='(%s,%d,%s)' % (e, i, h.uid))
+                if proxy is None:
+                    G.add_edge(e, h.uid, label='(%s,%d,%s)' % (e, i, h.uid))
+                else:
+                    G.add_edge(e, proxyPrefix + h.uid, label='(%s,%d,%s)' % (e, i, proxyPrefix + h.uid))
             else:
-                G.add_edge(h.uid, e, label='(%s,%s)' % (h.uid, e))
+                if proxy is None:
+                    G.add_edge(h.uid, e, label='(%s,%s)' % (h.uid, e))
+                else:
+                    G.add_edge(proxyPrefix + h.uid, e, label='(%s,%s)' % (proxyPrefix + h.uid, e))
     return G, dd
 
 posDict = {}
@@ -143,27 +168,27 @@ def save_hg(H, png_filename, colors = None):
 
 
 
-def hyper_cardon_crochemore(H, nodes_only=False):
+def hyper_cardon_crochemore(H, nodes_only=False, proxy=None):
     """
         Performs naive vertex refinement on the hypegraph H. 
         
         Args:
             H: the hypergraph.
             nodes_only: if set, only nodes of the hypergraph are considered.
-            
+            proxy: it will be passed as proxy when building the graph.
+           
         Returns:
             a dictionary whose keys are the nodes (and possibly the hyperarcs) of H, and where two keys 
             are in the same equivalence class iff they have the same value. Note that node classes and
             hyperarc classes are always disjoint.
     """
-    G, dd = hg2g(H)
+    G, dd = hg2g(H, proxy)
     cc = qf.cc.cardon_crochemore(G, starting_label=dd)
     if nodes_only:
         for x in G.nodes():
             if dd[x] == 1:
                 del cc[x]
     return cc
-
 
 
 def read_hg_from_csv(filename, max_lines = -1):
