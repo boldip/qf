@@ -133,9 +133,9 @@ def writeIndex(directory, index, title):
 
 
 def nafis(d):
-    elements = set(dd.keys())
+    elements = set(d.keys())
     n = len(elements)
-    classes = set(dd.values())
+    classes = set(d.values())
     afiber = n / len(classes)
     
     return afiber / (n - 1)
