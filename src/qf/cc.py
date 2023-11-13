@@ -75,3 +75,46 @@ def cardon_crochemore(G, max_step=-1, starting_label=None):
 
 
 
+def cardon_crochemore_colored(G, max_step=-1, starting_label=None, color_label="color"):
+    """
+        Computes and returns the coarsest equitable partition of the nodes of the graph G.
+        If `max_step` is not negative, the computation is stopped prematurely after that number of iterations.
+
+        Args:
+            G: a `networkx.MultiDiGraph` with colored arcs (the attribute used is named color_label).
+            max_step (int): the maximum number of iterations, or -1 to stop only after `G.number_of_nodes()` steps.
+            starting_label (dict): if set, it is a dictionary with one entry per node, used to initialize the labels.
+
+        Returns:
+            a dictionary with the nodes of `G` as keys, and with values in `range(k)` where `k` is the number of
+            classes; two nodes have the same value iff they belong to the same class.
+    """
+    if max_step < 0:
+        max_step = len(G.nodes)
+    if starting_label is None:
+        label={x:0 for x in G.nodes}
+    else:
+        label=starting_label
+    n=len(set(label.values()))
+    i = 0
+    while True:
+        m={}
+        for v in G.nodes:
+            t=[]
+            for w in G.in_edges([v], data=True):
+                t.append(str(label[w[0]])+"#"+str(w[2][color_label]))
+            t.sort()
+            t.append(str(label[v]))
+            m[v]=t
+        label=indexify(m)
+        nn=len(set(label.values()))
+        if nn==n:
+            break
+        n=nn
+        i += 1
+        if i >= max_step:
+            break
+    return label
+
+
+
